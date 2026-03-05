@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ENS Social Graph</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #0d0d14;
+      color: #e0e0f0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    header {
+      padding: 12px 20px;
+      background: #111120;
+      border-bottom: 1px solid #2a2a45;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+    header h1 { font-size: 16px; color: #7c6aff; letter-spacing: 0.05em; }
+    header span { font-size: 12px; color: #555570; }
+
+    .main { display: flex; flex: 1; overflow: hidden; }
+
+    /* LEFT PANEL */
+    .left { display: flex; flex-direction: column; flex: 1.4; border-right: 1px solid #2a2a45; min-width: 0; }
+
+    .controls {
+      padding: 12px 16px;
+      background: #111120;
+      border-bottom: 1px solid #2a2a45;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .controls-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .controls label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.08em; }
+
+    .preset-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+    .preset-btn {
+      padding: 4px 10px;
+      font-size: 11px;
+      background: #1e1e35;
+      color: #9988ff;
+      border: 1px solid #3a3a60;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .preset-btn:hover { background: #2a2a50; }
+
+    textarea {
+      width: 100%;
+      padding: 8px 10px;
+      background: #1a1a2e;
+      border: 1px solid #2a2a45;
+      border-radius: 4px;
+      color: #e0e0f0;
+      font-size: 12px;
+      font-family: monospace;
+      resize: vertical;
+      min-height: 60px;
+    }
+    textarea:focus { outline: none; border-color: #7c6aff; }
+
+    .btn-primary {
+      padding: 8px 18px;
+      background: #7c6aff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+    .btn-primary:hover { background: #6655ee; }
+    .btn-primary:disabled { background: #444; cursor: not-allowed; }
+
+    #graph-container { flex: 1; background: #0a0a12; position: relative; }
+    #graph { width: 100%; height: 100%; }
+    #graph-status {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #555570;
+      font-size: 13px;
+      text-align: center;
+      pointer-events: none;
+    }
+    #graph-progress {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #111120cc;
+      color: #9988ff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      display: none;
+    }
+
+    /* RIGHT PANEL */
+    .right {
+      width: 360px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      background: #0d0d14;
+      overflow-y: auto;
+    }
+    .profile-header {
+      padding: 14px 16px;
+      background: #111120;
+      border-bottom: 1px solid #2a2a45;
+      font-size: 12px;
+      color: #555570;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    #profile-panel {
+      padding: 20px;
+      flex: 1;
+    }
+    #profile-panel .empty {
+      color: #444;
+      font-size: 13px;
+      margin-top: 40px;
+      text-align: center;
+    }
+    #profile-panel h2 { color: #7c6aff; margin-bottom: 12px; font-size: 18px; }
+    #profile-panel img.avatar {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 12px;
+      border: 2px solid #2a2a45;
+      display: block;
+    }
+    #profile-panel .field { margin-bottom: 8px; font-size: 13px; line-height: 1.5; }
+    #profile-panel .field .lbl { color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 2px; }
+    #profile-panel .field a { color: #7c6aff; text-decoration: none; word-break: break-all; }
+    #profile-panel .field a:hover { text-decoration: underline; }
+    #profile-panel .field .val { word-break: break-all; }
+    #profile-panel .loading { color: #7c6aff; font-size: 13px; font-style: italic; }
+    #profile-panel .error { color: #ff6060; font-size: 13px; }
+    #profile-panel img.banner {
+      width: 100%;
+      height: auto;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      display: block;
+    }
+    .divider { border: none; border-top: 1px solid #2a2a45; margin: 12px 0; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>⬡ ENS Social Graph</h1>
+  <span>Click a node to view profile · Enter pairs to build graph</span>
+</header>
+
+<div class="main">
+  <!-- LEFT: graph -->
+  <div class="left">
+    <div class="controls">
+      <div class="controls-row">
+        <label>Presets:</label>
+        <div class="preset-btns">
+          <button class="preset-btn" onclick="loadPreset('ethereum')">Ethereum Core</button>
+          <button class="preset-btn" onclick="loadPreset('defi')">DeFi Leaders</button>
+          <button class="preset-btn" onclick="loadPreset('builders')">Builders</button>
+        </div>
+      </div>
+      <label>Pairs (one per line, comma-separated):</label>
+      <textarea id="pairs-input" placeholder="vitalik.eth, nick.eth&#10;nick.eth, brantly.eth&#10;vitalik.eth, balajis.eth"></textarea>
+      <div class="controls-row">
+        <button class="btn-primary" id="build-btn" onclick="buildGraph()">Build Graph</button>
+        <span id="pair-count" style="font-size:12px;color:#555570;"></span>
+      </div>
+    </div>
+    <div id="graph-container">
+      <div id="graph"></div>
+      <div id="graph-status">Enter ENS pairs above and click "Build Graph"</div>
+      <div id="graph-progress"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: profile -->
+  <div class="right">
+    <div class="profile-header">Profile Viewer</div>
+    <div id="profile-panel">
+      <div class="empty">← Click a node to load profile</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Presets ───────────────────────────────────────────────────────────────
+const PRESETS = {
+  ethereum: [
+    ['vitalik.eth', 'nick.eth'],
+    ['vitalik.eth', 'balajis.eth'],
+    ['nick.eth', 'brantly.eth'],
+    ['vitalik.eth', 'brantly.eth'],
+    ['nick.eth', 'lefteris.eth'],
+  ],
+  defi: [
+    ['hayden.eth', 'kain.eth'],
+    ['hayden.eth', 'stani.eth'],
+    ['kain.eth', 'stani.eth'],
+    ['banteg.eth', 'kain.eth'],
+    ['banteg.eth', 'hayden.eth'],
+  ],
+  builders: [
+    ['vitalik.eth', 'domh.eth'],
+    ['nick.eth', 'jefflau.eth'],
+    ['jefflau.eth', 'brantly.eth'],
+    ['domh.eth', 'nick.eth'],
+    ['vitalik.eth', 'nick.eth'],
+  ]
+};
+
+function loadPreset(key) {
+  const pairs = PRESETS[key];
+  document.getElementById('pairs-input').value = pairs.map(p => p.join(', ')).join('\n');
+  updatePairCount();
+}
+
+function updatePairCount() {
+  const pairs = parsePairs();
+  const nodes = new Set(pairs.flat());
+  document.getElementById('pair-count').textContent =
+    pairs.length ? `${pairs.length} pairs · ${nodes.size} nodes` : '';
+}
+
+document.getElementById('pairs-input').addEventListener('input', updatePairCount);
+
+function parsePairs() {
+  return document.getElementById('pairs-input').value
+    .split('\n')
+    .map(l => l.trim())
+    .filter(l => l.length > 0)
+    .map(l => l.split(',').map(s => s.trim().toLowerCase()).filter(s => s.endsWith('.eth')))
+    .filter(p => p.length === 2);
+}
+
+// ─── Avatar / profile helpers ───────────────────────────────────────────────
+const noImgSvg = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAiIGhlaWdodD0iODAiIGZpbGw9IiMyMjIyMzMiLz48dGV4dCB4PSI1MCUiIHk9IjU1JSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzY2NiI+Tm8gSW1nPC90ZXh0Pjwvc3ZnPg==';
+
+// Safely coerce anything to a string, return null if empty
+function toStr(val) {
+  if (val === null || val === undefined) return null;
+  if (typeof val === 'string') return val.trim() || null;
+  if (typeof val === 'object' && val.url) return String(val.url).trim() || null;
+  return String(val).trim() || null;
+}
+
+function resolveIpfs(url) {
+  if (!url) return url;
+  if (url.startsWith('ipfs://')) return url.replace('ipfs://', 'https://ipfs.io/ipfs/');
+  return url;
+}
+
+function looksLikeImage(val) {
+  if (!val || typeof val !== 'string') return false;
+  return /\.(png|jpe?g|gif|webp|svg|avif)(\?.*)?$/i.test(val)
+    || val.startsWith('data:image/')
+    || val.startsWith('https://ipfs.io/')
+    || val.startsWith('ipfs://');
+}
+
+// ─── ENS lookup ────────────────────────────────────────────────────────────
+let provider;
+function getProvider() {
+  if (!provider) provider = new ethers.providers.JsonRpcProvider('https://ethereum.publicnode.com');
+  return provider;
+}
+
+const profileCache = {};
+
+async function fetchProfile(name) {
+  if (profileCache[name]) return profileCache[name];
+  const p = getProvider();
+  const resolver = await p.getResolver(name);
+  if (!resolver) return profileCache[name] = null;
+
+  const textKeys = [
+    'avatar','description','display','url','email','location',
+    'com.twitter','com.github','com.reddit','org.telegram',
+    'com.linkedin','header'
+  ];
+
+  const data = {};
+  for (const key of textKeys) {
+    try {
+      const v = await resolver.getText(key);
+      const s = toStr(v);
+      if (s) data[key] = s;
+    } catch(_) {}
+  }
+
+  // getAvatar safely
+  let avatarUrl = null;
+  try {
+    const raw = await resolver.getAvatar();
+    avatarUrl = toStr(raw);
+    if (avatarUrl) avatarUrl = resolveIpfs(avatarUrl);
+  } catch(_) {}
+
+  // If getAvatar failed/empty, fall back to raw text record
+  if (!avatarUrl && data['avatar']) {
+    avatarUrl = resolveIpfs(data['avatar']);
+  }
+
+  let ethAddr = null;
+  try { ethAddr = toStr(await resolver.getAddress()); } catch(_) {}
+
+  let contentHash = null;
+  try { contentHash = toStr(await resolver.getContentHash()); } catch(_) {}
+
+  const profile = { name, data, avatarUrl, ethAddr, contentHash };
+  profileCache[name] = profile;
+  return profile;
+}
+
+// ─── Graph ─────────────────────────────────────────────────────────────────
+let network = null;
+let nodesDS = null;
+let edgesDS = null;
+
+async function buildGraph() {
+  const pairs = parsePairs();
+  if (!pairs.length) {
+    alert('Enter at least one valid pair of .eth names.');
+    return;
+  }
+
+  const btn = document.getElementById('build-btn');
+  const status = document.getElementById('graph-status');
+  const progress = document.getElementById('graph-progress');
+  btn.disabled = true;
+  status.textContent = '';
+  progress.style.display = 'block';
+
+  // Collect unique names
+  const allNames = [...new Set(pairs.flat())];
+
+  // Fetch profiles with progress
+  const profiles = {};
+  for (let i = 0; i < allNames.length; i++) {
+    const name = allNames[i];
+    progress.textContent = `Loading ${i + 1}/${allNames.length}: ${name}`;
+    try { profiles[name] = await fetchProfile(name); } catch(_) { profiles[name] = null; }
+  }
+
+  progress.style.display = 'none';
+  btn.disabled = false;
+
+  // Build vis datasets
+  const nodeList = allNames.map((name, idx) => {
+    const p = profiles[name];
+    const hasAvatar = p && p.avatarUrl;
+    const label = name.replace('.eth', '');
+    return {
+      id: idx,
+      label,
+      title: name,
+      shape: hasAvatar ? 'circularImage' : 'dot',
+      image: hasAvatar ? p.avatarUrl : undefined,
+      size: 28,
+      color: {
+        border: '#7c6aff',
+        background: '#1e1e35',
+        highlight: { border: '#ff6a9b', background: '#2a1a35' },
+        hover: { border: '#ff6a9b', background: '#2a1a35' }
+      },
+      font: { color: '#c0c0e0', size: 13, face: 'Arial' },
+      borderWidth: 2,
+      borderWidthSelected: 3,
+    };
+  });
+
+  const nameToId = {};
+  allNames.forEach((n, i) => nameToId[n] = i);
+
+  const edgeList = pairs.map((pair, i) => ({
+    id: i,
+    from: nameToId[pair[0]],
+    to: nameToId[pair[1]],
+    color: { color: '#3a3a60', highlight: '#7c6aff', hover: '#7c6aff' },
+    width: 1.5,
+    hoverWidth: 2.5,
+    smooth: { type: 'dynamic' }
+  }));
+
+  nodesDS = new vis.DataSet(nodeList);
+  edgesDS = new vis.DataSet(edgeList);
+
+  const container = document.getElementById('graph');
+  const options = {
+    physics: {
+      stabilization: { iterations: 120 },
+      barnesHut: { gravitationalConstant: -8000, springLength: 140, springConstant: 0.04 }
+    },
+    interaction: { hover: true, tooltipDelay: 200 },
+    edges: { arrows: { to: { enabled: false } } },
+  };
+
+  if (network) network.destroy();
+  network = new vis.Network(container, { nodes: nodesDS, edges: edgesDS }, options);
+
+  network.on('click', function(params) {
+    if (params.nodes.length > 0) {
+      const nodeId = params.nodes[0];
+      const name = allNames[nodeId];
+      loadProfilePanel(name, profiles[name]);
+    }
+  });
+}
+
+// ─── Profile Panel ─────────────────────────────────────────────────────────
+function loadProfilePanel(name, profile) {
+  const panel = document.getElementById('profile-panel');
+
+  if (!profile) {
+    panel.innerHTML = `<div class="error">No ENS resolver found for <strong>${name}</strong></div>`;
+    return;
+  }
+
+  const { data, avatarUrl, ethAddr, contentHash } = profile;
+  let html = '';
+
+  // Banner
+  if (data['header']) {
+    html += `<img class="banner" src="${data['header']}" alt="Banner" onerror="this.style.display='none'">`;
+  }
+
+  // Avatar
+  if (avatarUrl) {
+    html += `<img class="avatar" src="${avatarUrl}" alt="Avatar" onerror="this.src='${noImgSvg}'">`;
+  }
+
+  // Name + display
+  const displayName = data['display'] || name;
+  html += `<h2>${displayName}</h2>`;
+  if (data['display'] && data['display'] !== name) {
+    html += `<div class="field"><span class="lbl">ENS</span><span class="val">${name}</span></div>`;
+  }
+
+  html += '<hr class="divider">';
+
+  const fieldLabels = {
+    description: 'Bio',
+    url: 'Website',
+    email: 'Email',
+    location: 'Location',
+    'com.twitter': 'Twitter',
+    'com.github': 'GitHub',
+    'com.reddit': 'Reddit',
+    'org.telegram': 'Telegram',
+    'com.linkedin': 'LinkedIn',
+  };
+
+  for (const [key, label] of Object.entries(fieldLabels)) {
+    const val = data[key];
+    if (!val) continue;
+    let display;
+    if (key === 'url' || val.startsWith('http')) {
+      display = `<a href="${val}" target="_blank" rel="noopener noreferrer">${val}</a>`;
+    } else if (key === 'com.twitter') {
+      display = `<a href="https://twitter.com/${val}" target="_blank" rel="noopener noreferrer">@${val}</a>`;
+    } else if (key === 'com.github') {
+      display = `<a href="https://github.com/${val}" target="_blank" rel="noopener noreferrer">${val}</a>`;
+    } else {
+      display = `<span class="val">${val}</span>`;
+    }
+    html += `<div class="field"><span class="lbl">${label}</span>${display}</div>`;
+  }
+
+  if (ethAddr) {
+    const short = ethAddr.slice(0, 6) + '...' + ethAddr.slice(-4);
+    html += `<div class="field"><span class="lbl">ETH Address</span><a href="https://etherscan.io/address/${ethAddr}" target="_blank" rel="noopener noreferrer">${short}</a></div>`;
+  }
+  if (contentHash) {
+    html += `<div class="field"><span class="lbl">Content Hash</span><span class="val" style="font-size:11px">${contentHash}</span></div>`;
+  }
+
+  panel.innerHTML = html;
+}
+</script>
+</body>
+</html>
