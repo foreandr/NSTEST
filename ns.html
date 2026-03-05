@@ -3,240 +3,557 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ENS Social Graph</title>
+  <title>Network State · ENS Social Graph</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #f5f2eb;
+      --bg2:        #ede9df;
+      --surface:    #ffffff;
+      --border:     #d8d2c4;
+      --border2:    #c4bdb0;
+      --ink:        #1a1714;
+      --ink2:       #4a4540;
+      --ink3:       #8a8078;
+      --accent:     #2563c4;
+      --accent2:    #c45825;
+      --accent3:    #25a463;
+      --edge-line:  #b8b0a0;
+      --tag-bg:     #e8e2d8;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      background: #0d0d14;
-      color: #e0e0f0;
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--ink);
       height: 100vh;
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
+
+    /* ── HEADER ── */
     header {
-      padding: 12px 20px;
-      background: #111120;
-      border-bottom: 1px solid #2a2a45;
       display: flex;
       align-items: center;
-      gap: 16px;
       flex-shrink: 0;
+      border-bottom: 2px solid var(--ink);
+      background: var(--surface);
     }
-    header h1 { font-size: 16px; color: #7c6aff; letter-spacing: 0.05em; }
-    header span { font-size: 12px; color: #555570; }
 
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 20px;
+      border-right: 2px solid var(--ink);
+    }
+
+    .ns-hex { width: 38px; height: 38px; flex-shrink: 0; }
+
+    .header-title { padding: 10px 20px; flex: 1; }
+    .header-title h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      color: var(--ink);
+      line-height: 1;
+    }
+    .header-title p {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: var(--ink3);
+      margin-top: 3px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .header-status {
+      padding: 10px 20px;
+      border-left: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #ccc; transition: background 0.3s; }
+    .status-dot.online { background: var(--accent3); }
+    .status-dot.offline { background: var(--accent2); }
+    #status-text {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: var(--ink3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── LAYOUT ── */
     .main { display: flex; flex: 1; overflow: hidden; }
 
-    /* LEFT PANEL */
-    .left { display: flex; flex-direction: column; flex: 1.4; border-right: 1px solid #2a2a45; min-width: 0; }
+    /* ── LEFT ── */
+    .left { display: flex; flex-direction: column; flex: 1; min-width: 0; border-right: 2px solid var(--ink); }
 
     .controls {
       padding: 12px 16px;
-      background: #111120;
-      border-bottom: 1px solid #2a2a45;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
     }
     .controls-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .controls label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.08em; }
+
+    .section-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--ink3);
+      white-space: nowrap;
+    }
 
     .preset-btns { display: flex; gap: 6px; flex-wrap: wrap; }
     .preset-btn {
-      padding: 4px 10px;
+      padding: 4px 11px;
+      font-family: 'IBM Plex Mono', monospace;
       font-size: 11px;
-      background: #1e1e35;
-      color: #9988ff;
-      border: 1px solid #3a3a60;
-      border-radius: 4px;
+      background: var(--tag-bg);
+      color: var(--ink2);
+      border: 1px solid var(--border2);
+      border-radius: 2px;
       cursor: pointer;
+      transition: all 0.15s;
     }
-    .preset-btn:hover { background: #2a2a50; }
+    .preset-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
 
     textarea {
       width: 100%;
       padding: 8px 10px;
-      background: #1a1a2e;
-      border: 1px solid #2a2a45;
-      border-radius: 4px;
-      color: #e0e0f0;
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      border-radius: 2px;
+      color: var(--ink);
+      font-family: 'IBM Plex Mono', monospace;
       font-size: 12px;
-      font-family: monospace;
       resize: vertical;
-      min-height: 60px;
+      min-height: 54px;
+      line-height: 1.5;
     }
-    textarea:focus { outline: none; border-color: #7c6aff; }
+    textarea:focus { outline: none; border-color: var(--accent); }
 
     .btn-primary {
-      padding: 8px 18px;
-      background: #7c6aff;
-      color: white;
+      padding: 7px 18px;
+      background: var(--ink);
+      color: var(--bg);
       border: none;
-      border-radius: 4px;
+      border-radius: 2px;
       cursor: pointer;
+      font-family: 'Syne', sans-serif;
       font-size: 13px;
-      font-weight: bold;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      transition: background 0.15s;
       white-space: nowrap;
     }
-    .btn-primary:hover { background: #6655ee; }
-    .btn-primary:disabled { background: #444; cursor: not-allowed; }
+    .btn-primary:hover { background: var(--accent); }
+    .btn-primary:disabled { background: var(--ink3); cursor: not-allowed; }
 
-    #graph-container { flex: 1; background: #0a0a12; position: relative; }
+    .btn-danger {
+      padding: 4px 10px;
+      background: transparent;
+      color: var(--accent2);
+      border: 1px solid var(--accent2);
+      border-radius: 2px;
+      cursor: pointer;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      transition: all 0.15s;
+    }
+    .btn-danger:hover { background: var(--accent2); color: white; }
+
+    .btn-ghost {
+      padding: 5px 12px;
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      border-radius: 2px;
+      cursor: pointer;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .btn-ghost:hover { background: var(--accent); color: white; }
+
+    /* ── GRAPH ── */
+    #graph-container {
+      flex: 1;
+      position: relative;
+      background: var(--bg);
+      background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
     #graph { width: 100%; height: 100%; }
-    #graph-status {
+
+    #graph-overlay {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      color: #555570;
-      font-size: 13px;
+      color: var(--ink3);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
       text-align: center;
       pointer-events: none;
+      line-height: 1.9;
     }
     #graph-progress {
       position: absolute;
-      bottom: 12px;
+      bottom: 14px;
       left: 50%;
       transform: translateX(-50%);
-      background: #111120cc;
-      color: #9988ff;
-      padding: 6px 14px;
+      background: var(--surface);
+      color: var(--accent);
+      padding: 6px 16px;
       border-radius: 20px;
-      font-size: 12px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
       display: none;
+      white-space: nowrap;
+    }
+    #edge-mode-banner {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--accent2);
+      color: white;
+      padding: 6px 18px;
+      border-radius: 20px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      display: none;
+      pointer-events: none;
+      z-index: 10;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      white-space: nowrap;
     }
 
-    /* RIGHT PANEL */
+    /* ── RIGHT ── */
     .right {
-      width: 360px;
+      width: 340px;
       flex-shrink: 0;
       display: flex;
       flex-direction: column;
-      background: #0d0d14;
-      overflow-y: auto;
+      background: var(--surface);
+      overflow: hidden;
     }
-    .profile-header {
-      padding: 14px 16px;
-      background: #111120;
-      border-bottom: 1px solid #2a2a45;
+
+    .right-tabs {
+      display: flex;
+      border-bottom: 2px solid var(--ink);
+      flex-shrink: 0;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px 8px;
+      font-family: 'Syne', sans-serif;
       font-size: 12px;
-      color: #555570;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      background: var(--bg2);
+      color: var(--ink3);
+      border: none;
+      border-right: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tab-btn:last-child { border-right: none; }
+    .tab-btn.active { background: var(--surface); color: var(--ink); }
+    .tab-btn:hover:not(.active) { background: var(--bg); color: var(--ink2); }
+
+    .tab-panel { display: none; flex: 1; overflow-y: auto; flex-direction: column; }
+    .tab-panel.active { display: flex; }
+
+    /* ── PROFILE ── */
+    #profile-panel { padding: 20px; }
+    .profile-empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--ink3);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      line-height: 2.2;
+    }
+    .profile-banner { width: 100%; height: 80px; object-fit: cover; border-radius: 4px; margin-bottom: 12px; display: block; }
+    .profile-avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid var(--border); display: block; margin-bottom: 10px; }
+    .profile-name { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; color: var(--ink); line-height: 1.1; margin-bottom: 2px; }
+    .profile-ens { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--accent); margin-bottom: 12px; }
+    .profile-field { margin-bottom: 9px; }
+    .profile-field .lbl { font-family: 'IBM Plex Mono', monospace; font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink3); display: block; margin-bottom: 2px; }
+    .profile-field .val { font-size: 13px; color: var(--ink2); line-height: 1.4; word-break: break-all; }
+    .profile-field a { color: var(--accent); text-decoration: none; }
+    .profile-field a:hover { text-decoration: underline; }
+    .profile-divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+    .cache-badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 10px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
       letter-spacing: 0.05em;
       text-transform: uppercase;
+      margin-left: 6px;
+      vertical-align: middle;
     }
-    #profile-panel {
-      padding: 20px;
+    .cache-badge.hit { background: #e8f5ee; color: var(--accent3); border: 1px solid #c0e8d0; }
+    .cache-badge.miss { background: #fff3e8; color: var(--accent2); border: 1px solid #f0d0b0; }
+
+    /* ── EDGES ── */
+    .edges-add {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .edges-add .section-label { margin-bottom: 8px; display: block; }
+    .edge-inputs { display: flex; gap: 6px; align-items: center; }
+    .edge-inputs input {
       flex: 1;
+      padding: 6px 8px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 2px;
+      color: var(--ink);
+      min-width: 0;
     }
-    #profile-panel .empty {
-      color: #444;
-      font-size: 13px;
-      margin-top: 40px;
-      text-align: center;
+    .edge-inputs input:focus { outline: none; border-color: var(--accent); }
+    .edge-inputs .sep { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--ink3); flex-shrink: 0; }
+    .edge-hint { margin-top: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--ink3); }
+
+    .edge-draw-row {
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
     }
-    #profile-panel h2 { color: #7c6aff; margin-bottom: 12px; font-size: 18px; }
-    #profile-panel img.avatar {
-      width: 80px; height: 80px;
-      border-radius: 50%;
-      object-fit: cover;
-      margin-bottom: 12px;
-      border: 2px solid #2a2a45;
-      display: block;
+    .edge-draw-row .section-label { flex: 1; }
+
+    .edges-list { flex: 1; overflow-y: auto; }
+    .edge-item {
+      display: flex;
+      align-items: center;
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--border);
+      gap: 8px;
+      transition: background 0.1s;
     }
-    #profile-panel .field { margin-bottom: 8px; font-size: 13px; line-height: 1.5; }
-    #profile-panel .field .lbl { color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 2px; }
-    #profile-panel .field a { color: #7c6aff; text-decoration: none; word-break: break-all; }
-    #profile-panel .field a:hover { text-decoration: underline; }
-    #profile-panel .field .val { word-break: break-all; }
-    #profile-panel .loading { color: #7c6aff; font-size: 13px; font-style: italic; }
-    #profile-panel .error { color: #ff6060; font-size: 13px; }
-    #profile-panel img.banner {
-      width: 100%;
-      height: auto;
-      border-radius: 6px;
-      margin-bottom: 12px;
-      display: block;
+    .edge-item:hover { background: var(--bg); }
+    .edge-item .edge-names {
+      flex: 1;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--ink2);
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
-    .divider { border: none; border-top: 1px solid #2a2a45; margin: 12px 0; }
+    .edge-item .edge-names span { color: var(--accent); }
+    .edge-item .edge-date { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--ink3); white-space: nowrap; flex-shrink: 0; }
+    .no-edges { padding: 30px; text-align: center; color: var(--ink3); font-family: 'IBM Plex Mono', monospace; font-size: 11px; line-height: 2; }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 10px 18px;
+      border-radius: 4px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+      z-index: 100;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    }
+    #toast.show { opacity: 1; }
+    #toast.ok { background: var(--ink); color: var(--bg); }
+    #toast.err { background: var(--accent2); color: white; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg2); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
   </style>
 </head>
 <body>
 
 <header>
-  <h1>⬡ ENS Social Graph</h1>
-  <span>Click a node to view profile · Enter pairs to build graph</span>
+  <div class="header-logo">
+    <svg class="ns-hex" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="40,4 74,22 74,58 40,76 6,58 6,22" fill="#1a1714"/>
+      <polygon points="40,12 68,27 68,57 40,72 12,57 12,27" fill="none" stroke="#f5f2eb" stroke-width="1.5" stroke-dasharray="3 2"/>
+      <circle cx="40" cy="12" r="3.5" fill="#f5f2eb"/>
+      <circle cx="68" cy="27" r="3.5" fill="#f5f2eb"/>
+      <circle cx="68" cy="57" r="3.5" fill="#f5f2eb"/>
+      <circle cx="40" cy="72" r="3.5" fill="#f5f2eb"/>
+      <circle cx="12" cy="57" r="3.5" fill="#f5f2eb"/>
+      <circle cx="12" cy="27" r="3.5" fill="#f5f2eb"/>
+      <circle cx="40" cy="42" r="5" fill="#2563c4"/>
+      <line x1="40" y1="42" x2="40" y2="12" stroke="#2563c4" stroke-width="1.2" opacity="0.7"/>
+      <line x1="40" y1="42" x2="68" y2="27" stroke="#2563c4" stroke-width="1.2" opacity="0.7"/>
+      <line x1="40" y1="42" x2="68" y2="57" stroke="#2563c4" stroke-width="1.2" opacity="0.7"/>
+      <line x1="40" y1="42" x2="40" y2="72" stroke="#2563c4" stroke-width="1.2" opacity="0.7"/>
+      <line x1="40" y1="42" x2="12" y2="57" stroke="#2563c4" stroke-width="1.2" opacity="0.7"/>
+      <line x1="40" y1="42" x2="12" y2="27" stroke="#2563c4" stroke-width="1.2" opacity="0.7"/>
+    </svg>
+    <div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:13px;letter-spacing:0.04em;">NETWORK STATE</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#8a8078;letter-spacing:0.08em;">ENS SOCIAL GRAPH</div>
+    </div>
+  </div>
+  <div class="header-title">
+    <h1>Citizenship Graph</h1>
+    <p>On-chain identity · ENS · Friendship network</p>
+  </div>
+  <div class="header-status">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-text">checking...</span>
+  </div>
 </header>
 
 <div class="main">
-  <!-- LEFT: graph -->
+  <!-- LEFT: controls + graph -->
   <div class="left">
     <div class="controls">
       <div class="controls-row">
-        <label>Presets:</label>
+        <span class="section-label">Presets —</span>
         <div class="preset-btns">
           <button class="preset-btn" onclick="loadPreset('ethereum')">Ethereum Core</button>
           <button class="preset-btn" onclick="loadPreset('defi')">DeFi Leaders</button>
           <button class="preset-btn" onclick="loadPreset('builders')">Builders</button>
+          <button class="preset-btn" onclick="loadFromDB()">↺ Load from DB</button>
         </div>
       </div>
-      <label>Pairs (one per line, comma-separated):</label>
-      <textarea id="pairs-input" placeholder="vitalik.eth, nick.eth&#10;nick.eth, brantly.eth&#10;vitalik.eth, balajis.eth"></textarea>
+      <div>
+        <span class="section-label" style="display:block;margin-bottom:5px;">Pairs — one per line, comma separated</span>
+        <textarea id="pairs-input" rows="3" placeholder="vitalik.eth, nick.eth&#10;nick.eth, brantly.eth"></textarea>
+      </div>
       <div class="controls-row">
         <button class="btn-primary" id="build-btn" onclick="buildGraph()">Build Graph</button>
-        <span id="pair-count" style="font-size:12px;color:#555570;"></span>
+        <span id="pair-count" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink3);"></span>
       </div>
     </div>
+
     <div id="graph-container">
       <div id="graph"></div>
-      <div id="graph-status">Enter ENS pairs above and click "Build Graph"</div>
+      <div id="graph-overlay">
+        <div style="font-size:32px;margin-bottom:8px;">⬡</div>
+        Enter ENS pairs above and click Build Graph<br>
+        <span style="font-size:10px;opacity:0.6;">or load a preset · or load edges from DB</span>
+      </div>
       <div id="graph-progress"></div>
+      <div id="edge-mode-banner">⚡ Edge Draw Mode — click two nodes to connect · ESC to cancel</div>
     </div>
   </div>
 
-  <!-- RIGHT: profile -->
+  <!-- RIGHT: tabs -->
   <div class="right">
-    <div class="profile-header">Profile Viewer</div>
-    <div id="profile-panel">
-      <div class="empty">← Click a node to load profile</div>
+    <div class="right-tabs">
+      <button class="tab-btn active" onclick="switchTab('profile')">Profile</button>
+      <button class="tab-btn" onclick="switchTab('edges')">Edges</button>
+    </div>
+
+    <div class="tab-panel active" id="tab-profile">
+      <div id="profile-panel">
+        <div class="profile-empty">⬡<br>Click a node<br>to view profile</div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-edges">
+      <div id="edges-panel" style="display:flex;flex-direction:column;height:100%;">
+        <div class="edges-add">
+          <span class="section-label">Add Friendship Edge</span>
+          <div class="edge-inputs" style="margin-top:8px;">
+            <input type="text" id="edge-a" placeholder="alice.eth">
+            <span class="sep">↔</span>
+            <input type="text" id="edge-b" placeholder="bob.eth">
+            <button class="btn-ghost" onclick="addEdgeFromForm()">Add</button>
+          </div>
+          <div class="edge-hint">Tip: use Draw Mode to connect nodes on the graph</div>
+        </div>
+        <div class="edge-draw-row">
+          <span class="section-label">Draw Mode — click two nodes</span>
+          <button class="btn-ghost" id="draw-mode-btn" onclick="toggleDrawMode()">Enable</button>
+        </div>
+        <div class="edges-list" id="edges-list">
+          <div class="no-edges">No edges loaded yet.<br>Build the graph or load from DB.</div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
+<div id="toast"></div>
+
 <script>
-// ─── Presets ───────────────────────────────────────────────────────────────
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+const API = 'https://foreandr.pythonanywhere.com';
+
+// ── PRESETS ───────────────────────────────────────────────────────────────────
 const PRESETS = {
   ethereum: [
-    ['vitalik.eth', 'nick.eth'],
-    ['vitalik.eth', 'balajis.eth'],
-    ['nick.eth', 'brantly.eth'],
-    ['vitalik.eth', 'brantly.eth'],
-    ['nick.eth', 'lefteris.eth'],
+    ['vitalik.eth','nick.eth'],
+    ['vitalik.eth','balajis.eth'],
+    ['nick.eth','brantly.eth'],
+    ['vitalik.eth','brantly.eth'],
+    ['nick.eth','lefteris.eth'],
   ],
   defi: [
-    ['hayden.eth', 'kain.eth'],
-    ['hayden.eth', 'stani.eth'],
-    ['kain.eth', 'stani.eth'],
-    ['banteg.eth', 'kain.eth'],
-    ['banteg.eth', 'hayden.eth'],
+    ['hayden.eth','kain.eth'],
+    ['hayden.eth','stani.eth'],
+    ['kain.eth','stani.eth'],
+    ['banteg.eth','kain.eth'],
+    ['banteg.eth','hayden.eth'],
   ],
   builders: [
-    ['vitalik.eth', 'domh.eth'],
-    ['nick.eth', 'jefflau.eth'],
-    ['jefflau.eth', 'brantly.eth'],
-    ['domh.eth', 'nick.eth'],
-    ['vitalik.eth', 'nick.eth'],
+    ['vitalik.eth','domh.eth'],
+    ['nick.eth','jefflau.eth'],
+    ['jefflau.eth','brantly.eth'],
+    ['domh.eth','nick.eth'],
+    ['vitalik.eth','nick.eth'],
   ]
 };
 
 function loadPreset(key) {
-  const pairs = PRESETS[key];
-  document.getElementById('pairs-input').value = pairs.map(p => p.join(', ')).join('\n');
+  document.getElementById('pairs-input').value = PRESETS[key].map(p => p.join(', ')).join('\n');
   updatePairCount();
+}
+
+async function loadFromDB() {
+  try {
+    const res = await fetch(`${API}/api/edges`);
+    if (!res.ok) throw new Error();
+    const edges = await res.json();
+    if (!edges.length) { toast('No edges in DB yet', 'err'); return; }
+    document.getElementById('pairs-input').value = edges.map(e => `${e.name_a}, ${e.name_b}`).join('\n');
+    updatePairCount();
+    toast(`Loaded ${edges.length} edges from DB`);
+  } catch(e) { toast('Could not reach API', 'err'); }
 }
 
 function updatePairCount() {
@@ -245,27 +562,25 @@ function updatePairCount() {
   document.getElementById('pair-count').textContent =
     pairs.length ? `${pairs.length} pairs · ${nodes.size} nodes` : '';
 }
-
 document.getElementById('pairs-input').addEventListener('input', updatePairCount);
 
 function parsePairs() {
   return document.getElementById('pairs-input').value
-    .split('\n')
-    .map(l => l.trim())
-    .filter(l => l.length > 0)
+    .split('\n').map(l => l.trim()).filter(Boolean)
     .map(l => l.split(',').map(s => s.trim().toLowerCase()).filter(s => s.endsWith('.eth')))
     .filter(p => p.length === 2);
 }
 
-// ─── Avatar / profile helpers ───────────────────────────────────────────────
-const noImgSvg = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAiIGhlaWdodD0iODAiIGZpbGw9IiMyMjIyMzMiLz48dGV4dCB4PSI1MCUiIHk9IjU1JSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzY2NiI+Tm8gSW1nPC90ZXh0Pjwvc3ZnPg==';
+// ── ENS + CACHE ───────────────────────────────────────────────────────────────
+const noImg = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIGZpbGw9IiNlOGUyZDgiLz48dGV4dCB4PSI1MCUiIHk9IjU0JSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIxMCIgZmlsbD0iIzhhODA3OCI+bm8gaW1nPC90ZXh0Pjwvc3ZnPg==';
 
-// Safely coerce anything to a string, return null if empty
+// Safely coerce resolver return values — fixes the .startsWith crash
 function toStr(val) {
   if (val === null || val === undefined) return null;
   if (typeof val === 'string') return val.trim() || null;
-  if (typeof val === 'object' && val.url) return String(val.url).trim() || null;
-  return String(val).trim() || null;
+  if (typeof val === 'object' && val !== null && val.url) return String(val.url).trim() || null;
+  const s = String(val).trim();
+  return s && s !== 'null' && s !== 'undefined' ? s : null;
 }
 
 function resolveIpfs(url) {
@@ -274,232 +589,327 @@ function resolveIpfs(url) {
   return url;
 }
 
-function looksLikeImage(val) {
-  if (!val || typeof val !== 'string') return false;
-  return /\.(png|jpe?g|gif|webp|svg|avif)(\?.*)?$/i.test(val)
-    || val.startsWith('data:image/')
-    || val.startsWith('https://ipfs.io/')
-    || val.startsWith('ipfs://');
-}
-
-// ─── ENS lookup ────────────────────────────────────────────────────────────
-let provider;
+let ethProvider;
 function getProvider() {
-  if (!provider) provider = new ethers.providers.JsonRpcProvider('https://ethereum.publicnode.com');
-  return provider;
+  if (!ethProvider) ethProvider = new ethers.providers.JsonRpcProvider('https://ethereum.publicnode.com');
+  return ethProvider;
 }
 
-const profileCache = {};
+const memCache = {};
 
 async function fetchProfile(name) {
-  if (profileCache[name]) return profileCache[name];
-  const p = getProvider();
-  const resolver = await p.getResolver(name);
-  if (!resolver) return profileCache[name] = null;
+  if (memCache[name]) return { ...memCache[name], cacheHit: 'mem' };
 
-  const textKeys = [
-    'avatar','description','display','url','email','location',
-    'com.twitter','com.github','com.reddit','org.telegram',
-    'com.linkedin','header'
-  ];
-
-  const data = {};
-  for (const key of textKeys) {
-    try {
-      const v = await resolver.getText(key);
-      const s = toStr(v);
-      if (s) data[key] = s;
-    } catch(_) {}
-  }
-
-  // getAvatar safely
-  let avatarUrl = null;
+  // 1. Check Flask DB cache
   try {
-    const raw = await resolver.getAvatar();
-    avatarUrl = toStr(raw);
-    if (avatarUrl) avatarUrl = resolveIpfs(avatarUrl);
+    const res = await fetch(`${API}/api/profile/${encodeURIComponent(name)}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.cached) {
+        const p = { name, avatarUrl: data.avatar_url, ethAddr: data.eth_address, contentHash: data.content_hash, data: data.fields || {}, cacheHit: 'db' };
+        memCache[name] = p;
+        return p;
+      }
+    }
   } catch(_) {}
 
-  // If getAvatar failed/empty, fall back to raw text record
-  if (!avatarUrl && data['avatar']) {
-    avatarUrl = resolveIpfs(data['avatar']);
+  // 2. Fetch from Ethereum
+  const provider = getProvider();
+  const resolver = await provider.getResolver(name);
+  if (!resolver) return null;
+
+  const textKeys = ['avatar','description','display','url','email','location','com.twitter','com.github','com.reddit','org.telegram','com.linkedin','header'];
+  const data = {};
+  for (const key of textKeys) {
+    try { const v = toStr(await resolver.getText(key)); if (v) data[key] = v; } catch(_) {}
   }
+
+  let avatarUrl = null;
+  try { avatarUrl = toStr(await resolver.getAvatar()); if (avatarUrl) avatarUrl = resolveIpfs(avatarUrl); } catch(_) {}
+  if (!avatarUrl && data['avatar']) avatarUrl = resolveIpfs(data['avatar']);
 
   let ethAddr = null;
   try { ethAddr = toStr(await resolver.getAddress()); } catch(_) {}
-
   let contentHash = null;
   try { contentHash = toStr(await resolver.getContentHash()); } catch(_) {}
 
-  const profile = { name, data, avatarUrl, ethAddr, contentHash };
-  profileCache[name] = profile;
+  const profile = { name, data, avatarUrl, ethAddr, contentHash, cacheHit: 'chain' };
+  memCache[name] = profile;
+
+  // 3. Save to Flask DB (fire and forget)
+  fetch(`${API}/api/profile`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ens_name: name, avatar_url: avatarUrl, eth_address: ethAddr, content_hash: contentHash, fields: data })
+  }).catch(() => {});
+
   return profile;
 }
 
-// ─── Graph ─────────────────────────────────────────────────────────────────
-let network = null;
-let nodesDS = null;
-let edgesDS = null;
+// ── GRAPH ─────────────────────────────────────────────────────────────────────
+let network = null, nodesDS = null, edgesDS = null;
+let allNames = [], allProfiles = {}, edgeIdMap = {};
 
 async function buildGraph() {
   const pairs = parsePairs();
-  if (!pairs.length) {
-    alert('Enter at least one valid pair of .eth names.');
-    return;
-  }
+  if (!pairs.length) { toast('Enter at least one valid .eth pair', 'err'); return; }
 
   const btn = document.getElementById('build-btn');
-  const status = document.getElementById('graph-status');
+  const overlay = document.getElementById('graph-overlay');
   const progress = document.getElementById('graph-progress');
   btn.disabled = true;
-  status.textContent = '';
+  overlay.style.display = 'none';
   progress.style.display = 'block';
 
-  // Collect unique names
-  const allNames = [...new Set(pairs.flat())];
+  allNames = [...new Set(pairs.flat())];
 
-  // Fetch profiles with progress
-  const profiles = {};
   for (let i = 0; i < allNames.length; i++) {
     const name = allNames[i];
     progress.textContent = `Loading ${i + 1}/${allNames.length}: ${name}`;
-    try { profiles[name] = await fetchProfile(name); } catch(_) { profiles[name] = null; }
+    try { allProfiles[name] = await fetchProfile(name); } catch(_) { allProfiles[name] = null; }
   }
 
   progress.style.display = 'none';
   btn.disabled = false;
 
-  // Build vis datasets
-  const nodeList = allNames.map((name, idx) => {
-    const p = profiles[name];
-    const hasAvatar = p && p.avatarUrl;
-    const label = name.replace('.eth', '');
-    return {
-      id: idx,
-      label,
-      title: name,
-      shape: hasAvatar ? 'circularImage' : 'dot',
-      image: hasAvatar ? p.avatarUrl : undefined,
-      size: 28,
-      color: {
-        border: '#7c6aff',
-        background: '#1e1e35',
-        highlight: { border: '#ff6a9b', background: '#2a1a35' },
-        hover: { border: '#ff6a9b', background: '#2a1a35' }
-      },
-      font: { color: '#c0c0e0', size: 13, face: 'Arial' },
-      borderWidth: 2,
-      borderWidthSelected: 3,
-    };
-  });
-
   const nameToId = {};
   allNames.forEach((n, i) => nameToId[n] = i);
 
-  const edgeList = pairs.map((pair, i) => ({
-    id: i,
-    from: nameToId[pair[0]],
-    to: nameToId[pair[1]],
-    color: { color: '#3a3a60', highlight: '#7c6aff', hover: '#7c6aff' },
-    width: 1.5,
-    hoverWidth: 2.5,
-    smooth: { type: 'dynamic' }
-  }));
+  const nodeList = allNames.map((name, idx) => {
+    const p = allProfiles[name];
+    const hasAvatar = p && p.avatarUrl;
+    return {
+      id: idx,
+      label: name.replace('.eth',''),
+      title: name,
+      shape: hasAvatar ? 'circularImage' : 'dot',
+      image: hasAvatar ? p.avatarUrl : undefined,
+      size: 24,
+      color: {
+        border: '#2563c4', background: '#e8eef8',
+        highlight: { border: '#c45825', background: '#fef3ec' },
+        hover: { border: '#c45825', background: '#fef3ec' }
+      },
+      font: { color: '#1a1714', size: 13, face: 'IBM Plex Mono' },
+      borderWidth: 2, borderWidthSelected: 3,
+    };
+  });
+
+  edgeIdMap = {};
+  const edgeList = [];
+
+  for (let i = 0; i < pairs.length; i++) {
+    const [a, b] = pairs[i];
+    let dbId = null;
+    try {
+      const res = await fetch(`${API}/api/edges`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name_a: a, name_b: b })
+      });
+      const json = await res.json();
+      if (json.edge) dbId = json.edge.id;
+      else if (res.status === 409) {
+        const all = await fetch(`${API}/api/edges`).then(r => r.json()).catch(() => []);
+        const found = all.find(e => (e.name_a===a&&e.name_b===b)||(e.name_a===b&&e.name_b===a));
+        if (found) dbId = found.id;
+      }
+    } catch(_) {}
+
+    edgeList.push({
+      id: i, from: nameToId[a], to: nameToId[b],
+      color: { color: '#b8b0a0', highlight: '#2563c4', hover: '#2563c4' },
+      width: 1.5, hoverWidth: 2.5, smooth: { type: 'dynamic' }
+    });
+    if (dbId !== null) edgeIdMap[i] = dbId;
+  }
 
   nodesDS = new vis.DataSet(nodeList);
   edgesDS = new vis.DataSet(edgeList);
 
   const container = document.getElementById('graph');
-  const options = {
-    physics: {
-      stabilization: { iterations: 120 },
-      barnesHut: { gravitationalConstant: -8000, springLength: 140, springConstant: 0.04 }
-    },
-    interaction: { hover: true, tooltipDelay: 200 },
-    edges: { arrows: { to: { enabled: false } } },
-  };
-
   if (network) network.destroy();
-  network = new vis.Network(container, { nodes: nodesDS, edges: edgesDS }, options);
+  network = new vis.Network(container, { nodes: nodesDS, edges: edgesDS }, {
+    physics: { stabilization: { iterations: 120 }, barnesHut: { gravitationalConstant: -6000, springLength: 130, springConstant: 0.04 } },
+    interaction: { hover: true },
+    edges: { arrows: { to: { enabled: false } } }
+  });
 
-  network.on('click', function(params) {
+  network.on('click', params => {
+    if (drawMode && params.nodes.length > 0) { handleDrawModeClick(params.nodes[0]); return; }
     if (params.nodes.length > 0) {
-      const nodeId = params.nodes[0];
-      const name = allNames[nodeId];
-      loadProfilePanel(name, profiles[name]);
+      const name = allNames[params.nodes[0]];
+      loadProfilePanel(name, allProfiles[name]);
+      switchTab('profile');
     }
   });
+
+  await refreshEdgesList();
+  toast(`Graph built · ${allNames.length} nodes · ${pairs.length} edges`);
 }
 
-// ─── Profile Panel ─────────────────────────────────────────────────────────
+// ── PROFILE PANEL ─────────────────────────────────────────────────────────────
 function loadProfilePanel(name, profile) {
   const panel = document.getElementById('profile-panel');
+  if (!profile) { panel.innerHTML = `<div class="profile-empty">No resolver found for<br><strong>${name}</strong></div>`; return; }
 
-  if (!profile) {
-    panel.innerHTML = `<div class="error">No ENS resolver found for <strong>${name}</strong></div>`;
-    return;
-  }
+  const { data, avatarUrl, ethAddr, contentHash, cacheHit } = profile;
+  const cacheLabel = cacheHit === 'db' ? 'DB cache' : cacheHit === 'mem' ? 'mem' : 'live chain';
+  const cacheClass = cacheHit === 'chain' ? 'miss' : 'hit';
 
-  const { data, avatarUrl, ethAddr, contentHash } = profile;
   let html = '';
+  if (data['header']) html += `<img class="profile-banner" src="${data['header']}" alt="Banner" onerror="this.style.display='none'">`;
+  if (avatarUrl) html += `<img class="profile-avatar" src="${avatarUrl}" alt="Avatar" onerror="this.src='${noImg}'">`;
 
-  // Banner
-  if (data['header']) {
-    html += `<img class="banner" src="${data['header']}" alt="Banner" onerror="this.style.display='none'">`;
-  }
-
-  // Avatar
-  if (avatarUrl) {
-    html += `<img class="avatar" src="${avatarUrl}" alt="Avatar" onerror="this.src='${noImgSvg}'">`;
-  }
-
-  // Name + display
   const displayName = data['display'] || name;
-  html += `<h2>${displayName}</h2>`;
-  if (data['display'] && data['display'] !== name) {
-    html += `<div class="field"><span class="lbl">ENS</span><span class="val">${name}</span></div>`;
+  html += `<div class="profile-name">${displayName} <span class="cache-badge ${cacheClass}">${cacheLabel}</span></div>`;
+  html += `<div class="profile-ens">${name}</div>`;
+  html += `<hr class="profile-divider">`;
+
+  const fields = { description:'Bio', url:'Website', email:'Email', location:'Location', 'com.twitter':'Twitter', 'com.github':'GitHub', 'org.telegram':'Telegram', 'com.linkedin':'LinkedIn' };
+  for (const [key, label] of Object.entries(fields)) {
+    const val = data[key]; if (!val) continue;
+    let disp;
+    if (key === 'com.twitter') disp = `<a href="https://twitter.com/${val}" target="_blank">@${val}</a>`;
+    else if (key === 'com.github') disp = `<a href="https://github.com/${val}" target="_blank">${val}</a>`;
+    else if (typeof val === 'string' && val.startsWith('http')) disp = `<a href="${val}" target="_blank">${val}</a>`;
+    else disp = `<span class="val">${val}</span>`;
+    html += `<div class="profile-field"><span class="lbl">${label}</span>${disp}</div>`;
   }
-
-  html += '<hr class="divider">';
-
-  const fieldLabels = {
-    description: 'Bio',
-    url: 'Website',
-    email: 'Email',
-    location: 'Location',
-    'com.twitter': 'Twitter',
-    'com.github': 'GitHub',
-    'com.reddit': 'Reddit',
-    'org.telegram': 'Telegram',
-    'com.linkedin': 'LinkedIn',
-  };
-
-  for (const [key, label] of Object.entries(fieldLabels)) {
-    const val = data[key];
-    if (!val) continue;
-    let display;
-    if (key === 'url' || val.startsWith('http')) {
-      display = `<a href="${val}" target="_blank" rel="noopener noreferrer">${val}</a>`;
-    } else if (key === 'com.twitter') {
-      display = `<a href="https://twitter.com/${val}" target="_blank" rel="noopener noreferrer">@${val}</a>`;
-    } else if (key === 'com.github') {
-      display = `<a href="https://github.com/${val}" target="_blank" rel="noopener noreferrer">${val}</a>`;
-    } else {
-      display = `<span class="val">${val}</span>`;
-    }
-    html += `<div class="field"><span class="lbl">${label}</span>${display}</div>`;
-  }
-
   if (ethAddr) {
-    const short = ethAddr.slice(0, 6) + '...' + ethAddr.slice(-4);
-    html += `<div class="field"><span class="lbl">ETH Address</span><a href="https://etherscan.io/address/${ethAddr}" target="_blank" rel="noopener noreferrer">${short}</a></div>`;
+    const short = ethAddr.slice(0,6)+'…'+ethAddr.slice(-4);
+    html += `<div class="profile-field"><span class="lbl">ETH Address</span><a href="https://etherscan.io/address/${ethAddr}" target="_blank">${short}</a></div>`;
   }
-  if (contentHash) {
-    html += `<div class="field"><span class="lbl">Content Hash</span><span class="val" style="font-size:11px">${contentHash}</span></div>`;
-  }
+  if (contentHash) html += `<div class="profile-field"><span class="lbl">Content Hash</span><span class="val" style="font-size:10px;">${contentHash}</span></div>`;
 
   panel.innerHTML = html;
 }
+
+// ── EDGES PANEL ───────────────────────────────────────────────────────────────
+async function refreshEdgesList() {
+  const list = document.getElementById('edges-list');
+  try {
+    const edges = await fetch(`${API}/api/edges`).then(r => r.json());
+    if (!edges.length) { list.innerHTML = '<div class="no-edges">No edges in DB yet.</div>'; return; }
+    list.innerHTML = edges.map(e => {
+      const date = new Date(e.created_at * 1000).toLocaleDateString();
+      return `<div class="edge-item" id="edge-item-${e.id}">
+        <div class="edge-names"><span>${e.name_a}</span> ↔ <span>${e.name_b}</span></div>
+        <div class="edge-date">${date}</div>
+        <button class="btn-danger" onclick="deleteEdge(${e.id},'${e.name_a}','${e.name_b}')">✕</button>
+      </div>`;
+    }).join('');
+  } catch(_) { list.innerHTML = '<div class="no-edges">API offline.</div>'; }
+}
+
+async function addEdgeFromForm() {
+  const a = document.getElementById('edge-a').value.trim().toLowerCase();
+  const b = document.getElementById('edge-b').value.trim().toLowerCase();
+  if (!a.endsWith('.eth') || !b.endsWith('.eth')) { toast('Both names must end in .eth', 'err'); return; }
+  await createEdge(a, b);
+  document.getElementById('edge-a').value = '';
+  document.getElementById('edge-b').value = '';
+}
+
+async function createEdge(a, b) {
+  try {
+    const res = await fetch(`${API}/api/edges`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name_a: a, name_b: b })
+    });
+    const json = await res.json();
+    if (res.ok) {
+      toast(`Edge added: ${a} ↔ ${b}`);
+      await refreshEdgesList();
+      if (network && nodesDS) {
+        const ai = allNames.indexOf(a), bi = allNames.indexOf(b);
+        if (ai !== -1 && bi !== -1) {
+          const newId = Date.now();
+          edgesDS.add({ id: newId, from: ai, to: bi, color: { color: '#b8b0a0', highlight: '#2563c4', hover: '#2563c4' }, width: 1.5, smooth: { type: 'dynamic' } });
+          if (json.edge) edgeIdMap[newId] = json.edge.id;
+        }
+      }
+    } else { toast(json.error || 'Failed to add edge', 'err'); }
+  } catch(_) { toast('API offline', 'err'); }
+}
+
+async function deleteEdge(dbId, nameA, nameB) {
+  if (!confirm(`Delete edge: ${nameA} ↔ ${nameB}?`)) return;
+  try {
+    const res = await fetch(`${API}/api/edges/${dbId}`, { method: 'DELETE' });
+    if (res.ok) {
+      toast('Edge deleted');
+      document.getElementById(`edge-item-${dbId}`)?.remove();
+      if (edgesDS) {
+        const visId = Object.entries(edgeIdMap).find(([,v]) => v === dbId)?.[0];
+        if (visId !== undefined) { edgesDS.remove(parseInt(visId)); delete edgeIdMap[visId]; }
+      }
+    } else { toast('Failed to delete', 'err'); }
+  } catch(_) { toast('API offline', 'err'); }
+}
+
+// ── DRAW MODE ─────────────────────────────────────────────────────────────────
+let drawMode = false, drawFirst = null;
+
+function toggleDrawMode() {
+  drawMode = !drawMode;
+  const btn = document.getElementById('draw-mode-btn');
+  const banner = document.getElementById('edge-mode-banner');
+  btn.textContent = drawMode ? 'Disable' : 'Enable';
+  btn.style.cssText = drawMode ? 'background:var(--accent2);color:white;border-color:var(--accent2)' : '';
+  banner.style.display = drawMode ? 'block' : 'none';
+  drawFirst = null;
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && drawMode) toggleDrawMode(); });
+
+function handleDrawModeClick(nodeId) {
+  if (drawFirst === null) {
+    drawFirst = nodeId;
+    nodesDS.update({ id: nodeId, borderWidth: 4, color: { border: '#c45825', background: '#fef3ec', highlight: { border: '#c45825', background: '#fef3ec' } } });
+    toast(`Selected: ${allNames[nodeId]} — now click second node`);
+  } else {
+    if (drawFirst === nodeId) { toast('Cannot connect to itself', 'err'); drawFirst = null; return; }
+    const a = allNames[drawFirst], b = allNames[nodeId];
+    nodesDS.update({ id: drawFirst, borderWidth: 2, color: { border: '#2563c4', background: '#e8eef8', highlight: { border: '#c45825', background: '#fef3ec' }, hover: { border: '#c45825', background: '#fef3ec' } } });
+    drawFirst = null;
+    createEdge(a, b);
+    toggleDrawMode();
+  }
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', ['profile','edges'][i] === tab));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  if (tab === 'edges') refreshEdgesList();
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg, type = 'ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.className = '', 3000);
+}
+
+// ── HEALTH CHECK ──────────────────────────────────────────────────────────────
+async function checkHealth() {
+  const dot = document.getElementById('status-dot');
+  const txt = document.getElementById('status-text');
+  try {
+    const data = await fetch(`${API}/api/health`).then(r => r.json());
+    dot.className = 'status-dot online';
+    txt.textContent = `API online · ${data.profiles} profiles · ${data.edges} edges`;
+  } catch(_) {
+    dot.className = 'status-dot offline';
+    txt.textContent = 'API offline — chain only';
+  }
+}
+checkHealth();
 </script>
 </body>
 </html>
