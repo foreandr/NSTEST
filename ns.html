@@ -3,203 +3,213 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Network State · ENS Social Graph</title>
+  <title>Network School · ENS Social Graph</title>
+  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAK0AAACUCAMAAADWBFkUAAAAZlBMVEX///8AAAD7+/tzc3OxsbHh4eE4ODjExMS2trYhISH19fU7OzvQ0NB7e3ufn58dHR0xMTGLi4vq6urW1taBgYEZGRkLCwtVVVXKysplZWVfX1+rq6tKSkonJydra2u8vLyUlJRDQ0MlzXauAAAB8ElEQVR4nO3a23KqMBiGYUKIkV0gEEAhiNz/TbbB2rWWqxTsDBDs95w548Fr5idsxHEAAAAAAAAAAAAAAAAA4GW5XDbB1hGz1YSQItu6YiZODLp1xkxqqE22zpjpOtT2949Zzr1GiKuUSql4oKRojt0pt2FagqGWOy7jgla6T9ukKEvyj7Lw2zQNdXWOpeD/VQcsOgp1cdfIjRJCmvv8zuYfjLD963fxNWqdmITMcbznar+wSq1LyQG1qEUtap+qTetKF5bUTu+3F8Zyrr7vtac2NlfAnW9F7fQkDLVH1D5fOz0JyqLa6bVF7U9rX20SbkdZYkXt6NpW0eld5wlubmO6sPWTx7sgi2rPD98195hCqlhvWTs6CY+1d2JPtS5qZ9eOH2V5FH3x1MPS2k/S7GCM54HhBpbXDvvt7Sttf1b1Dmp3di6zoxZri1rnJSdBufbUTq+t9t5PaZbcoc942uz31UWPXtquWvtqz8FQi1rU/qba235bFm0a9rqmUjRd9AdvrvRcad0fUr8Y33LLfMXaXAmPs29fq8iirhEyppTWOkyNQ19VVX2hNFbyuEbsvfYpGYu4ccoZY9kqf0d/+JjbnUDtclC7HNQuB7XLQe1ydleb7qj2SmobXlGca80rPgAAAAAAAAAAAAAAAADYpTc5tyQeg+fkmAAAAABJRU5ErkJggg==">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:         #f5f2eb;
-      --bg2:        #ede9df;
-      --surface:    #ffffff;
-      --border:     #d8d2c4;
-      --border2:    #c4bdb0;
-      --ink:        #1a1714;
-      --ink2:       #4a4540;
-      --ink3:       #8a8078;
-      --accent:     #2563c4;
-      --accent2:    #c45825;
-      --accent3:    #25a463;
-      --edge-line:  #b8b0a0;
-      --tag-bg:     #e8e2d8;
+      --black: #0a0a0a;
+      --white: #ffffff;
+      --gray:  #f5f5f5;
+      --gray2: #e8e8e8;
+      --gray3: #aaaaaa;
+      --gray4: #666666;
+      --border: #d0d0d0;
+      --accent: #0a0a0a;
+      --red:   #cc0000;
     }
 
     body {
-      font-family: 'Lora', Georgia, serif;
-      background: var(--bg);
-      color: var(--ink);
+      font-family: 'EB Garamond', Georgia, serif;
+      background: var(--white);
+      color: var(--black);
       height: 100vh;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      font-size: 16px;
     }
 
-    /* ── HEADER ── */
     header {
       display: flex;
       align-items: center;
+      padding: 0 24px;
+      height: 52px;
+      border-bottom: 1px solid var(--black);
+      background: var(--white);
       flex-shrink: 0;
-      border-bottom: 2px solid var(--ink);
-      background: var(--surface);
+      gap: 16px;
     }
 
     .header-logo {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 10px 20px;
-      border-right: 2px solid var(--ink);
+      gap: 10px;
+      text-decoration: none;
+      color: var(--black);
     }
 
-    .ns-hex { width: 38px; height: 38px; flex-shrink: 0; }
+    .header-logo img { width: 28px; height: 28px; display: block; }
 
-    .header-title { padding: 10px 20px; flex: 1; }
-    .header-title h1 {
-      font-family: 'Syne', sans-serif;
-      font-size: 17px;
-      font-weight: 800;
-      letter-spacing: 0.03em;
-      color: var(--ink);
-      line-height: 1;
-    }
-    .header-title p {
+    .header-logo-text {
       font-family: 'IBM Plex Mono', monospace;
-      font-size: 10px;
-      color: var(--ink3);
-      margin-top: 3px;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    .header-divider { width: 1px; height: 24px; background: var(--border); }
+
+    .header-title {
+      font-family: 'EB Garamond', Georgia, serif;
+      font-size: 16px;
+      font-style: italic;
+      color: var(--gray4);
+      flex: 1;
     }
 
     .header-status {
-      padding: 10px 20px;
-      border-left: 1px solid var(--border);
       display: flex;
       align-items: center;
-      gap: 8px;
-    }
-    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #ccc; transition: background 0.3s; }
-    .status-dot.online { background: var(--accent3); }
-    .status-dot.offline { background: var(--accent2); }
-    #status-text {
+      gap: 7px;
       font-family: 'IBM Plex Mono', monospace;
       font-size: 10px;
-      color: var(--ink3);
+      color: var(--gray3);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
     }
 
-    /* ── LAYOUT ── */
+    .status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gray2);
+      transition: background 0.3s;
+      flex-shrink: 0;
+    }
+    .status-dot.online  { background: #22aa55; }
+    .status-dot.offline { background: var(--red); }
+
     .main { display: flex; flex: 1; overflow: hidden; }
 
-    /* ── LEFT ── */
-    .left { display: flex; flex-direction: column; flex: 1; min-width: 0; border-right: 2px solid var(--ink); }
+    .left {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 0;
+      border-right: 1px solid var(--black);
+    }
 
     .controls {
-      padding: 12px 16px;
-      background: var(--surface);
+      padding: 12px 18px;
+      background: var(--white);
       border-bottom: 1px solid var(--border);
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 9px;
     }
-    .controls-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
-    .section-label {
+    .controls-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .lbl {
       font-family: 'IBM Plex Mono', monospace;
       font-size: 10px;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      color: var(--ink3);
+      color: var(--gray3);
       white-space: nowrap;
     }
 
     .preset-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+
     .preset-btn {
-      padding: 4px 11px;
+      padding: 3px 10px;
       font-family: 'IBM Plex Mono', monospace;
-      font-size: 11px;
-      background: var(--tag-bg);
-      color: var(--ink2);
-      border: 1px solid var(--border2);
-      border-radius: 2px;
+      font-size: 10px;
+      background: var(--white);
+      color: var(--black);
+      border: 1px solid var(--black);
       cursor: pointer;
-      transition: all 0.15s;
+      transition: all 0.1s;
+      letter-spacing: 0.03em;
     }
-    .preset-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+    .preset-btn:hover { background: var(--black); color: var(--white); }
 
     textarea {
       width: 100%;
-      padding: 8px 10px;
-      background: var(--bg);
-      border: 1px solid var(--border2);
-      border-radius: 2px;
-      color: var(--ink);
+      padding: 7px 10px;
+      background: var(--gray);
+      border: 1px solid var(--border);
+      color: var(--black);
       font-family: 'IBM Plex Mono', monospace;
-      font-size: 12px;
+      font-size: 11px;
       resize: vertical;
-      min-height: 54px;
-      line-height: 1.5;
+      min-height: 50px;
+      line-height: 1.6;
     }
-    textarea:focus { outline: none; border-color: var(--accent); }
+    textarea:focus { outline: none; border-color: var(--black); }
 
     .btn-primary {
-      padding: 7px 18px;
-      background: var(--ink);
-      color: var(--bg);
-      border: none;
-      border-radius: 2px;
+      padding: 6px 16px;
+      background: var(--black);
+      color: var(--white);
+      border: 1px solid var(--black);
       cursor: pointer;
-      font-family: 'Syne', sans-serif;
-      font-size: 13px;
-      font-weight: 700;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
       letter-spacing: 0.04em;
-      transition: background 0.15s;
+      text-transform: uppercase;
+      transition: all 0.1s;
       white-space: nowrap;
     }
-    .btn-primary:hover { background: var(--accent); }
-    .btn-primary:disabled { background: var(--ink3); cursor: not-allowed; }
+    .btn-primary:hover { background: var(--white); color: var(--black); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
 
     .btn-danger {
-      padding: 4px 10px;
+      padding: 3px 8px;
       background: transparent;
-      color: var(--accent2);
-      border: 1px solid var(--accent2);
-      border-radius: 2px;
+      color: var(--red);
+      border: 1px solid var(--red);
       cursor: pointer;
       font-family: 'IBM Plex Mono', monospace;
-      font-size: 11px;
-      transition: all 0.15s;
+      font-size: 10px;
+      transition: all 0.1s;
     }
-    .btn-danger:hover { background: var(--accent2); color: white; }
+    .btn-danger:hover { background: var(--red); color: white; }
 
     .btn-ghost {
-      padding: 5px 12px;
+      padding: 4px 10px;
       background: transparent;
-      color: var(--accent);
-      border: 1px solid var(--accent);
-      border-radius: 2px;
+      color: var(--black);
+      border: 1px solid var(--black);
       cursor: pointer;
       font-family: 'IBM Plex Mono', monospace;
-      font-size: 11px;
-      transition: all 0.15s;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      transition: all 0.1s;
       white-space: nowrap;
     }
-    .btn-ghost:hover { background: var(--accent); color: white; }
+    .btn-ghost:hover { background: var(--black); color: var(--white); }
 
-    /* ── GRAPH ── */
     #graph-container {
       flex: 1;
       position: relative;
-      background: var(--bg);
-      background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
-      background-size: 28px 28px;
+      background: var(--white);
+      background-image: radial-gradient(circle, var(--gray2) 1px, transparent 1px);
+      background-size: 24px 24px;
     }
+
     #graph { width: 100%; height: 100%; }
 
     #graph-overlay {
@@ -207,229 +217,183 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      color: var(--ink3);
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 12px;
-      text-align: center;
-      pointer-events: none;
-      line-height: 1.9;
-    }
-    #graph-progress {
-      position: absolute;
-      bottom: 14px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--surface);
-      color: var(--accent);
-      padding: 6px 16px;
-      border-radius: 20px;
+      color: var(--gray3);
       font-family: 'IBM Plex Mono', monospace;
       font-size: 11px;
-      border: 1px solid var(--border);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      display: none;
-      white-space: nowrap;
+      text-align: center;
+      pointer-events: none;
+      line-height: 2;
+      letter-spacing: 0.04em;
     }
+
+    #graph-progress {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--white);
+      border: 1px solid var(--black);
+      padding: 28px 36px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      z-index: 100;
+      min-width: 300px;
+      box-shadow: 4px 4px 0px var(--black);
+    }
+    #graph-progress.active { display: flex; }
+    #progress-bar-track { width: 100%; height: 2px; background: var(--gray2); }
+    #progress-bar-fill { height: 100%; background: var(--black); width: 0%; transition: width 0.15s; }
+    #progress-text {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--black);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
     #edge-mode-banner {
       position: absolute;
       top: 12px;
       left: 50%;
       transform: translateX(-50%);
-      background: var(--accent2);
-      color: white;
-      padding: 6px 18px;
-      border-radius: 20px;
+      background: var(--black);
+      color: var(--white);
+      padding: 5px 16px;
       font-family: 'IBM Plex Mono', monospace;
-      font-size: 11px;
+      font-size: 10px;
       display: none;
       pointer-events: none;
       z-index: 10;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      white-space: nowrap;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
     }
 
-    /* ── RIGHT ── */
     .right {
-      width: 340px;
+      width: 320px;
       flex-shrink: 0;
       display: flex;
       flex-direction: column;
-      background: var(--surface);
-      overflow: hidden;
+      background: var(--white);
     }
 
     .right-tabs {
       display: flex;
-      border-bottom: 2px solid var(--ink);
+      border-bottom: 1px solid var(--black);
       flex-shrink: 0;
     }
+
     .tab-btn {
       flex: 1;
       padding: 10px 8px;
-      font-family: 'Syne', sans-serif;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.04em;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      background: var(--bg2);
-      color: var(--ink3);
+      background: var(--gray);
+      color: var(--gray4);
       border: none;
       border-right: 1px solid var(--border);
       cursor: pointer;
-      transition: all 0.15s;
+      transition: all 0.1s;
     }
     .tab-btn:last-child { border-right: none; }
-    .tab-btn.active { background: var(--surface); color: var(--ink); }
-    .tab-btn:hover:not(.active) { background: var(--bg); color: var(--ink2); }
+    .tab-btn.active { background: var(--white); color: var(--black); }
+    .tab-btn:hover:not(.active) { background: var(--gray2); color: var(--black); }
 
     .tab-panel { display: none; flex: 1; overflow-y: auto; flex-direction: column; }
     .tab-panel.active { display: flex; }
 
-    /* ── PROFILE ── */
-    #profile-panel { padding: 20px; }
+    #profile-panel { padding: 20px 18px; }
+
     .profile-empty {
-      padding: 40px 20px;
+      padding: 50px 20px;
       text-align: center;
-      color: var(--ink3);
+      color: var(--gray3);
       font-family: 'IBM Plex Mono', monospace;
-      font-size: 12px;
-      line-height: 2.2;
-    }
-    .profile-banner { width: 100%; height: 80px; object-fit: cover; border-radius: 4px; margin-bottom: 12px; display: block; }
-    .profile-avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid var(--border); display: block; margin-bottom: 10px; }
-    .profile-name { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; color: var(--ink); line-height: 1.1; margin-bottom: 2px; }
-    .profile-ens { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--accent); margin-bottom: 12px; }
-    .profile-field { margin-bottom: 9px; }
-    .profile-field .lbl { font-family: 'IBM Plex Mono', monospace; font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink3); display: block; margin-bottom: 2px; }
-    .profile-field .val { font-size: 13px; color: var(--ink2); line-height: 1.4; word-break: break-all; }
-    .profile-field a { color: var(--accent); text-decoration: none; }
-    .profile-field a:hover { text-decoration: underline; }
-    .profile-divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
-    .cache-badge {
-      display: inline-block;
-      padding: 2px 7px;
-      border-radius: 10px;
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 9px;
-      letter-spacing: 0.05em;
+      font-size: 10px;
+      line-height: 2.5;
       text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .profile-banner { width: 100%; height: 70px; object-fit: cover; margin-bottom: 14px; display: block; }
+    .profile-avatar { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); display: block; margin-bottom: 10px; }
+    .profile-name { font-family: 'EB Garamond', Georgia, serif; font-size: 20px; font-weight: 500; line-height: 1.1; margin-bottom: 2px; }
+    .profile-ens { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--gray3); margin-bottom: 14px; letter-spacing: 0.04em; }
+    .profile-field { margin-bottom: 10px; }
+    .profile-field .field-lbl { font-family: 'IBM Plex Mono', monospace; font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--gray3); display: block; margin-bottom: 2px; }
+    .profile-field .field-val { font-size: 14px; color: var(--black); line-height: 1.4; word-break: break-all; }
+    .profile-field a { color: var(--black); text-decoration: underline; text-underline-offset: 2px; }
+    .profile-field a:hover { color: var(--gray4); }
+    .profile-divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+
+    .cache-badge {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 1px 5px;
+      border: 1px solid var(--border);
+      color: var(--gray3);
       margin-left: 6px;
       vertical-align: middle;
     }
-    .cache-badge.hit { background: #e8f5ee; color: var(--accent3); border: 1px solid #c0e8d0; }
-    .cache-badge.miss { background: #fff3e8; color: var(--accent2); border: 1px solid #f0d0b0; }
+    .cache-badge.live { border-color: #22aa55; color: #22aa55; }
 
-    /* ── EDGES ── */
-    .edges-add {
-      padding: 14px 16px;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg);
-    }
-    .edges-add .section-label { margin-bottom: 8px; display: block; }
-    .edge-inputs { display: flex; gap: 6px; align-items: center; }
-    .edge-inputs input {
-      flex: 1;
-      padding: 6px 8px;
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 11px;
-      background: var(--surface);
-      border: 1px solid var(--border2);
-      border-radius: 2px;
-      color: var(--ink);
-      min-width: 0;
-    }
-    .edge-inputs input:focus { outline: none; border-color: var(--accent); }
-    .edge-inputs .sep { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--ink3); flex-shrink: 0; }
-    .edge-hint { margin-top: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--ink3); }
+    .edges-add { padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--gray); }
+    .edges-add .lbl { display: block; margin-bottom: 7px; }
+    .edge-inputs { display: flex; gap: 5px; align-items: center; }
+    .edge-inputs input { flex: 1; padding: 5px 7px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; background: var(--white); border: 1px solid var(--border); color: var(--black); min-width: 0; }
+    .edge-inputs input:focus { outline: none; border-color: var(--black); }
+    .edge-inputs .sep { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--gray3); flex-shrink: 0; }
+    .edge-hint { margin-top: 5px; font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--gray3); letter-spacing: 0.04em; }
 
-    .edge-draw-row {
-      padding: 8px 16px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--surface);
-    }
-    .edge-draw-row .section-label { flex: 1; }
-
+    .edge-draw-row { padding: 8px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+    .edge-draw-row .lbl { flex: 1; }
     .edges-list { flex: 1; overflow-y: auto; }
-    .edge-item {
-      display: flex;
-      align-items: center;
-      padding: 9px 14px;
-      border-bottom: 1px solid var(--border);
-      gap: 8px;
-      transition: background 0.1s;
-    }
-    .edge-item:hover { background: var(--bg); }
-    .edge-item .edge-names {
-      flex: 1;
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 11px;
-      color: var(--ink2);
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .edge-item .edge-names span { color: var(--accent); }
-    .edge-item .edge-date { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--ink3); white-space: nowrap; flex-shrink: 0; }
-    .no-edges { padding: 30px; text-align: center; color: var(--ink3); font-family: 'IBM Plex Mono', monospace; font-size: 11px; line-height: 2; }
 
-    /* ── TOAST ── */
+    .edge-item { display: flex; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--border); gap: 8px; }
+    .edge-item:hover { background: var(--gray); }
+    .edge-item .edge-names { flex: 1; font-family: 'IBM Plex Mono', monospace; font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+    .edge-item .edge-date { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--gray3); flex-shrink: 0; }
+
+    .no-edges { padding: 30px; text-align: center; color: var(--gray3); font-family: 'IBM Plex Mono', monospace; font-size: 10px; line-height: 2; text-transform: uppercase; letter-spacing: 0.06em; }
+
     #toast {
       position: fixed;
-      bottom: 24px;
-      right: 24px;
-      padding: 10px 18px;
-      border-radius: 4px;
+      bottom: 20px;
+      right: 20px;
+      padding: 8px 16px;
       font-family: 'IBM Plex Mono', monospace;
-      font-size: 12px;
+      font-size: 11px;
       opacity: 0;
       transition: opacity 0.2s;
       pointer-events: none;
       z-index: 100;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+      letter-spacing: 0.03em;
     }
     #toast.show { opacity: 1; }
-    #toast.ok { background: var(--ink); color: var(--bg); }
-    #toast.err { background: var(--accent2); color: white; }
+    #toast.ok  { background: var(--black); color: var(--white); }
+    #toast.err { background: var(--red);   color: var(--white); }
 
-    ::-webkit-scrollbar { width: 5px; }
-    ::-webkit-scrollbar-track { background: var(--bg2); }
-    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--gray); }
+    ::-webkit-scrollbar-thumb { background: var(--border); }
   </style>
 </head>
 <body>
 
 <header>
-  <div class="header-logo">
-    <svg class="ns-hex" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <polygon points="40,4 74,22 74,58 40,76 6,58 6,22" fill="#1a1714"/>
-      <polygon points="40,12 68,27 68,57 40,72 12,57 12,27" fill="none" stroke="#f5f2eb" stroke-width="1.5" stroke-dasharray="3 2"/>
-      <circle cx="40" cy="12" r="3.5" fill="#f5f2eb"/>
-      <circle cx="68" cy="27" r="3.5" fill="#f5f2eb"/>
-      <circle cx="68" cy="57" r="3.5" fill="#f5f2eb"/>
-      <circle cx="40" cy="72" r="3.5" fill="#f5f2eb"/>
-      <circle cx="12" cy="57" r="3.5" fill="#f5f2eb"/>
-      <circle cx="12" cy="27" r="3.5" fill="#f5f2eb"/>
-      <circle cx="40" cy="42" r="5" fill="#2563c4"/>
-      <line x1="40" y1="42" x2="40" y2="12" stroke="#2563c4" stroke-width="1.2" opacity="0.7"/>
-      <line x1="40" y1="42" x2="68" y2="27" stroke="#2563c4" stroke-width="1.2" opacity="0.7"/>
-      <line x1="40" y1="42" x2="68" y2="57" stroke="#2563c4" stroke-width="1.2" opacity="0.7"/>
-      <line x1="40" y1="42" x2="40" y2="72" stroke="#2563c4" stroke-width="1.2" opacity="0.7"/>
-      <line x1="40" y1="42" x2="12" y2="57" stroke="#2563c4" stroke-width="1.2" opacity="0.7"/>
-      <line x1="40" y1="42" x2="12" y2="27" stroke="#2563c4" stroke-width="1.2" opacity="0.7"/>
-    </svg>
-    <div>
-      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:13px;letter-spacing:0.04em;">NETWORK STATE</div>
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#8a8078;letter-spacing:0.08em;">ENS SOCIAL GRAPH</div>
-    </div>
-  </div>
-  <div class="header-title">
-    <h1>Citizenship Graph</h1>
-    <p>On-chain identity · ENS · Friendship network</p>
-  </div>
+  <a class="header-logo" href="https://ns.com" target="_blank">
+    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAK0AAACUCAMAAADWBFkUAAAAZlBMVEX///8AAAD7+/tzc3OxsbHh4eE4ODjExMS2trYhISH19fU7OzvQ0NB7e3ufn58dHR0xMTGLi4vq6urW1taBgYEZGRkLCwtVVVXKysplZWVfX1+rq6tKSkonJydra2u8vLyUlJRDQ0MlzXauAAAB8ElEQVR4nO3a23KqMBiGYUKIkV0gEEAhiNz/TbbB2rWWqxTsDBDs95w548Fr5idsxHEAAAAAAAAAAAAAAAAA4GW5XDbB1hGz1YSQItu6YiZODLp1xkxqqE22zpjpOtT2949Zzr1GiKuUSql4oKRojt0pt2FagqGWOy7jgla6T9ukKEvyj7Lw2zQNdXWOpeD/VQcsOgp1cdfIjRJCmvv8zuYfjLD963fxNWqdmITMcbznar+wSq1LyQG1qEUtap+qTetKF5bUTu+3F8Zyrr7vtac2NlfAnW9F7fQkDLVH1D5fOz0JyqLa6bVF7U9rX20SbkdZYkXt6NpW0eld5wlubmO6sPWTx7sgi2rPD98195hCqlhvWTs6CY+1d2JPtS5qZ9eOH2V5FH3x1MPS2k/S7GCM54HhBpbXDvvt7Sttf1b1Dmp3di6zoxZri1rnJSdBufbUTq+t9t5PaZbcoc942uz31UWPXtquWvtqz8FQi1rU/qba235bFm0a9rqmUjRd9AdvrvRcad0fUr8Y33LLfMXaXAmPs29fq8iirhEyppTWOkyNQ19VVX2hNFbyuEbsvfYpGYu4ccoZY9kqf0d/+JjbnUDtclC7HNQuB7XLQe1ydleb7qj2SmobXlGca80rPgAAAAAAAAAAAAAAAADYpTc5tyQeg+fkmAAAAABJRU5ErkJggg==" alt="NS">
+    <span class="header-logo-text">ns.com</span>
+  </a>
+  <div class="header-divider"></div>
+  <div class="header-title">ENS Social Graph</div>
   <div class="header-status">
     <div class="status-dot" id="status-dot"></div>
     <span id="status-text">checking...</span>
@@ -437,41 +401,38 @@
 </header>
 
 <div class="main">
-  <!-- LEFT: controls + graph -->
   <div class="left">
     <div class="controls">
       <div class="controls-row">
-        <span class="section-label">Presets —</span>
+        <span class="lbl">Presets</span>
         <div class="preset-btns">
           <button class="preset-btn" onclick="loadPreset('ethereum')">Ethereum Core</button>
-          <button class="preset-btn" onclick="loadPreset('defi')">DeFi Leaders</button>
+          <button class="preset-btn" onclick="loadPreset('defi')">DeFi</button>
           <button class="preset-btn" onclick="loadPreset('builders')">Builders</button>
-          <button class="preset-btn" onclick="loadFromDB()">↺ Load from DB</button>
+          <button class="preset-btn" onclick="loadFromDB()">↺ From DB</button>
         </div>
       </div>
       <div>
-        <span class="section-label" style="display:block;margin-bottom:5px;">Pairs — one per line, comma separated</span>
+        <div class="lbl" style="margin-bottom:5px;">Pairs — one per line, comma separated</div>
         <textarea id="pairs-input" rows="3" placeholder="vitalik.eth, nick.eth&#10;nick.eth, brantly.eth"></textarea>
       </div>
       <div class="controls-row">
-        <button class="btn-primary" id="build-btn" onclick="buildGraph()">Build Graph</button>
-        <span id="pair-count" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink3);"></span>
+        <button class="btn-primary" id="build-btn" onclick="buildGraph()">Build Graph →</button>
+        <span id="pair-count" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gray3);"></span>
       </div>
     </div>
 
     <div id="graph-container">
       <div id="graph"></div>
-      <div id="graph-overlay">
-        <div style="font-size:32px;margin-bottom:8px;">⬡</div>
-        Enter ENS pairs above and click Build Graph<br>
-        <span style="font-size:10px;opacity:0.6;">or load a preset · or load edges from DB</span>
+      <div id="graph-overlay">ENTER ENS PAIRS ABOVE<br>AND CLICK BUILD GRAPH</div>
+      <div id="graph-progress">
+        <div id="progress-bar-track"><div id="progress-bar-fill"></div></div>
+        <div id="progress-text">Loading...</div>
       </div>
-      <div id="graph-progress"></div>
-      <div id="edge-mode-banner">⚡ Edge Draw Mode — click two nodes to connect · ESC to cancel</div>
+      <div id="edge-mode-banner">Edge Draw Mode · Click two nodes · ESC to cancel</div>
     </div>
   </div>
 
-  <!-- RIGHT: tabs -->
   <div class="right">
     <div class="right-tabs">
       <button class="tab-btn active" onclick="switchTab('profile')">Profile</button>
@@ -480,28 +441,28 @@
 
     <div class="tab-panel active" id="tab-profile">
       <div id="profile-panel">
-        <div class="profile-empty">⬡<br>Click a node<br>to view profile</div>
+        <div class="profile-empty">← Click a node<br>to view profile</div>
       </div>
     </div>
 
     <div class="tab-panel" id="tab-edges">
-      <div id="edges-panel" style="display:flex;flex-direction:column;height:100%;">
+      <div style="display:flex;flex-direction:column;height:100%;">
         <div class="edges-add">
-          <span class="section-label">Add Friendship Edge</span>
-          <div class="edge-inputs" style="margin-top:8px;">
+          <span class="lbl">Add Friendship Edge</span>
+          <div class="edge-inputs">
             <input type="text" id="edge-a" placeholder="alice.eth">
             <span class="sep">↔</span>
             <input type="text" id="edge-b" placeholder="bob.eth">
             <button class="btn-ghost" onclick="addEdgeFromForm()">Add</button>
           </div>
-          <div class="edge-hint">Tip: use Draw Mode to connect nodes on the graph</div>
+          <div class="edge-hint">Or use Draw Mode to connect nodes on the graph</div>
         </div>
         <div class="edge-draw-row">
-          <span class="section-label">Draw Mode — click two nodes</span>
+          <span class="lbl">Draw mode — click two nodes</span>
           <button class="btn-ghost" id="draw-mode-btn" onclick="toggleDrawMode()">Enable</button>
         </div>
         <div class="edges-list" id="edges-list">
-          <div class="no-edges">No edges loaded yet.<br>Build the graph or load from DB.</div>
+          <div class="no-edges">No edges loaded</div>
         </div>
       </div>
     </div>
@@ -511,32 +472,13 @@
 <div id="toast"></div>
 
 <script>
-// ── CONFIG ────────────────────────────────────────────────────────────────────
 const API = 'https://foreandr.pythonanywhere.com';
 
 // ── PRESETS ───────────────────────────────────────────────────────────────────
 const PRESETS = {
-  ethereum: [
-    ['vitalik.eth','nick.eth'],
-    ['vitalik.eth','balajis.eth'],
-    ['nick.eth','brantly.eth'],
-    ['vitalik.eth','brantly.eth'],
-    ['nick.eth','lefteris.eth'],
-  ],
-  defi: [
-    ['hayden.eth','kain.eth'],
-    ['hayden.eth','stani.eth'],
-    ['kain.eth','stani.eth'],
-    ['banteg.eth','kain.eth'],
-    ['banteg.eth','hayden.eth'],
-  ],
-  builders: [
-    ['vitalik.eth','domh.eth'],
-    ['nick.eth','jefflau.eth'],
-    ['jefflau.eth','brantly.eth'],
-    ['domh.eth','nick.eth'],
-    ['vitalik.eth','nick.eth'],
-  ]
+  ethereum: [['vitalik.eth','nick.eth'],['vitalik.eth','balajis.eth'],['nick.eth','brantly.eth'],['vitalik.eth','brantly.eth'],['nick.eth','lefteris.eth']],
+  defi:     [['hayden.eth','kain.eth'],['hayden.eth','stani.eth'],['kain.eth','stani.eth'],['banteg.eth','kain.eth'],['banteg.eth','hayden.eth']],
+  builders: [['vitalik.eth','domh.eth'],['nick.eth','jefflau.eth'],['jefflau.eth','brantly.eth'],['domh.eth','nick.eth'],['vitalik.eth','nick.eth']]
 };
 
 function loadPreset(key) {
@@ -546,21 +488,18 @@ function loadPreset(key) {
 
 async function loadFromDB() {
   try {
-    const res = await fetch(`${API}/api/edges`);
-    if (!res.ok) throw new Error();
-    const edges = await res.json();
-    if (!edges.length) { toast('No edges in DB yet', 'err'); return; }
+    const edges = await fetch(`${API}/api/edges`).then(r => r.json());
+    if (!edges.length) { toast('No edges in DB', 'err'); return; }
     document.getElementById('pairs-input').value = edges.map(e => `${e.name_a}, ${e.name_b}`).join('\n');
     updatePairCount();
     toast(`Loaded ${edges.length} edges from DB`);
-  } catch(e) { toast('Could not reach API', 'err'); }
+  } catch(_) { toast('API offline', 'err'); }
 }
 
 function updatePairCount() {
   const pairs = parsePairs();
   const nodes = new Set(pairs.flat());
-  document.getElementById('pair-count').textContent =
-    pairs.length ? `${pairs.length} pairs · ${nodes.size} nodes` : '';
+  document.getElementById('pair-count').textContent = pairs.length ? `${pairs.length} pairs · ${nodes.size} nodes` : '';
 }
 document.getElementById('pairs-input').addEventListener('input', updatePairCount);
 
@@ -571,10 +510,9 @@ function parsePairs() {
     .filter(p => p.length === 2);
 }
 
-// ── ENS + CACHE ───────────────────────────────────────────────────────────────
-const noImg = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIGZpbGw9IiNlOGUyZDgiLz48dGV4dCB4PSI1MCUiIHk9IjU0JSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIxMCIgZmlsbD0iIzhhODA3OCI+bm8gaW1nPC90ZXh0Pjwvc3ZnPg==';
+// ── ENS ───────────────────────────────────────────────────────────────────────
+const noImg = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIGZpbGw9IiNlZWVlZWUiLz48dGV4dCB4PSI1MCUiIHk9IjU0JSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIxMCIgZmlsbD0iI2FhYWFhYSI+bm8gaW1nPC90ZXh0Pjwvc3ZnPg==';
 
-// Safely coerce resolver return values — fixes the .startsWith crash
 function toStr(val) {
   if (val === null || val === undefined) return null;
   if (typeof val === 'string') return val.trim() || null;
@@ -584,8 +522,10 @@ function toStr(val) {
 }
 
 function resolveIpfs(url) {
-  if (!url) return url;
+  if (!url) return null;
   if (url.startsWith('ipfs://')) return url.replace('ipfs://', 'https://ipfs.io/ipfs/');
+  if (url.startsWith('eip155:')) return null;
+  if (!url.startsWith('http') && !url.startsWith('data:')) return null;
   return url;
 }
 
@@ -600,22 +540,18 @@ const memCache = {};
 async function fetchProfile(name) {
   if (memCache[name]) return { ...memCache[name], cacheHit: 'mem' };
 
-  // 1. Check Flask DB cache
   try {
     const res = await fetch(`${API}/api/profile/${encodeURIComponent(name)}`);
     if (res.ok) {
-      const data = await res.json();
-      if (data.cached) {
-        const p = { name, avatarUrl: data.avatar_url, ethAddr: data.eth_address, contentHash: data.content_hash, data: data.fields || {}, cacheHit: 'db' };
-        memCache[name] = p;
-        return p;
+      const d = await res.json();
+      if (d.cached) {
+        const p = { name, avatarUrl: d.avatar_url, ethAddr: d.eth_address, contentHash: d.content_hash, data: d.fields || {}, cacheHit: 'db' };
+        memCache[name] = p; return p;
       }
     }
   } catch(_) {}
 
-  // 2. Fetch from Ethereum
-  const provider = getProvider();
-  const resolver = await provider.getResolver(name);
+  const resolver = await getProvider().getResolver(name);
   if (!resolver) return null;
 
   const textKeys = ['avatar','description','display','url','email','location','com.twitter','com.github','com.reddit','org.telegram','com.linkedin','header'];
@@ -628,18 +564,14 @@ async function fetchProfile(name) {
   try { avatarUrl = toStr(await resolver.getAvatar()); if (avatarUrl) avatarUrl = resolveIpfs(avatarUrl); } catch(_) {}
   if (!avatarUrl && data['avatar']) avatarUrl = resolveIpfs(data['avatar']);
 
-  let ethAddr = null;
-  try { ethAddr = toStr(await resolver.getAddress()); } catch(_) {}
-  let contentHash = null;
-  try { contentHash = toStr(await resolver.getContentHash()); } catch(_) {}
+  let ethAddr = null; try { ethAddr = toStr(await resolver.getAddress()); } catch(_) {}
+  let contentHash = null; try { contentHash = toStr(await resolver.getContentHash()); } catch(_) {}
 
   const profile = { name, data, avatarUrl, ethAddr, contentHash, cacheHit: 'chain' };
   memCache[name] = profile;
 
-  // 3. Save to Flask DB (fire and forget)
   fetch(`${API}/api/profile`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ens_name: name, avatar_url: avatarUrl, eth_address: ethAddr, content_hash: contentHash, fields: data })
   }).catch(() => {});
 
@@ -651,89 +583,98 @@ let network = null, nodesDS = null, edgesDS = null;
 let allNames = [], allProfiles = {}, edgeIdMap = {};
 
 async function buildGraph() {
-  const pairs = parsePairs();
-  if (!pairs.length) { toast('Enter at least one valid .eth pair', 'err'); return; }
+  const inputPairs = parsePairs();
+  if (!inputPairs.length) { toast('Enter at least one valid .eth pair', 'err'); return; }
 
   const btn = document.getElementById('build-btn');
   const overlay = document.getElementById('graph-overlay');
   const progress = document.getElementById('graph-progress');
   btn.disabled = true;
   overlay.style.display = 'none';
-  progress.style.display = 'block';
+  progress.classList.add('active');
+  document.getElementById('progress-bar-fill').style.width = '0%';
 
+  let dbEdges = [];
+  try { dbEdges = await fetch(`${API}/api/edges`).then(r => r.json()); } catch(_) {}
+
+  const pairs = inputPairs;
   allNames = [...new Set(pairs.flat())];
 
   for (let i = 0; i < allNames.length; i++) {
     const name = allNames[i];
-    progress.textContent = `Loading ${i + 1}/${allNames.length}: ${name}`;
+    const pct = Math.round(((i + 1) / allNames.length) * 100);
+    document.getElementById('progress-bar-fill').style.width = pct + '%';
+    document.getElementById('progress-text').textContent = `Loading ${i + 1} / ${allNames.length}: ${name}`;
     try { allProfiles[name] = await fetchProfile(name); } catch(_) { allProfiles[name] = null; }
   }
 
-  progress.style.display = 'none';
+  progress.classList.remove('active');
   btn.disabled = false;
+
+  if (!allNames.length) { overlay.style.display = 'block'; toast('No valid .eth names found', 'err'); return; }
 
   const nameToId = {};
   allNames.forEach((n, i) => nameToId[n] = i);
 
+  // ── Nodes ──
   const nodeList = allNames.map((name, idx) => {
     const p = allProfiles[name];
     const hasAvatar = p && p.avatarUrl;
     return {
       id: idx,
-      label: name.replace('.eth',''),
+      label: name.replace('.eth', ''),
       title: name,
       shape: hasAvatar ? 'circularImage' : 'dot',
       image: hasAvatar ? p.avatarUrl : undefined,
       size: 24,
       color: {
-        border: '#2563c4', background: '#e8eef8',
-        highlight: { border: '#c45825', background: '#fef3ec' },
-        hover: { border: '#c45825', background: '#fef3ec' }
+        border: '#0a0a0a',
+        background: '#e8e8e8',
+        highlight: { border: '#0a0a0a', background: '#ffffff' },
+        hover: { border: '#444444', background: '#f5f5f5' }
       },
-      font: { color: '#1a1714', size: 13, face: 'IBM Plex Mono' },
-      borderWidth: 2, borderWidthSelected: 3,
+      font: { color: '#0a0a0a', size: 12, face: 'IBM Plex Mono' },
+      borderWidth: 1.5,
+      borderWidthSelected: 2.5,
     };
   });
 
+  // ── Edges ──
   edgeIdMap = {};
   const edgeList = [];
 
   for (let i = 0; i < pairs.length; i++) {
     const [a, b] = pairs[i];
-    let dbId = null;
-    try {
-      const res = await fetch(`${API}/api/edges`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name_a: a, name_b: b })
-      });
-      const json = await res.json();
-      if (json.edge) dbId = json.edge.id;
-      else if (res.status === 409) {
-        const all = await fetch(`${API}/api/edges`).then(r => r.json()).catch(() => []);
-        const found = all.find(e => (e.name_a===a&&e.name_b===b)||(e.name_a===b&&e.name_b===a));
-        if (found) dbId = found.id;
-      }
-    } catch(_) {}
+    const na = a < b ? a : b, nb = a < b ? b : a;
+    const found = dbEdges.find(e => e.name_a === na && e.name_b === nb);
+    let dbId = found ? found.id : null;
 
-    edgeList.push({
-      id: i, from: nameToId[a], to: nameToId[b],
-      color: { color: '#b8b0a0', highlight: '#2563c4', hover: '#2563c4' },
-      width: 1.5, hoverWidth: 2.5, smooth: { type: 'dynamic' }
-    });
+    if (!dbId) {
+      try {
+        const res = await fetch(`${API}/api/edges`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name_a: a, name_b: b })
+        });
+        const json = await res.json();
+        if (json.edge) dbId = json.edge.id;
+      } catch(_) {}
+    }
+
+    edgeList.push({ id: i, from: nameToId[a], to: nameToId[b] });
     if (dbId !== null) edgeIdMap[i] = dbId;
   }
 
   nodesDS = new vis.DataSet(nodeList);
   edgesDS = new vis.DataSet(edgeList);
 
-  const container = document.getElementById('graph');
   if (network) network.destroy();
-  network = new vis.Network(container, { nodes: nodesDS, edges: edgesDS }, {
-    physics: { stabilization: { iterations: 120 }, barnesHut: { gravitationalConstant: -6000, springLength: 130, springConstant: 0.04 } },
-    interaction: { hover: true },
-    edges: { arrows: { to: { enabled: false } } }
-  });
+
+  // ── Most basic vis.js options ──
+  network = new vis.Network(
+    document.getElementById('graph'),
+    { nodes: nodesDS, edges: edgesDS },
+    {}  // empty = all defaults
+  );
 
   network.on('click', params => {
     if (drawMode && params.nodes.length > 0) { handleDrawModeClick(params.nodes[0]); return; }
@@ -745,24 +686,23 @@ async function buildGraph() {
   });
 
   await refreshEdgesList();
-  toast(`Graph built · ${allNames.length} nodes · ${pairs.length} edges`);
+  toast(`${allNames.length} nodes · ${pairs.length} edges`);
 }
 
 // ── PROFILE PANEL ─────────────────────────────────────────────────────────────
 function loadProfilePanel(name, profile) {
   const panel = document.getElementById('profile-panel');
-  if (!profile) { panel.innerHTML = `<div class="profile-empty">No resolver found for<br><strong>${name}</strong></div>`; return; }
+  if (!profile) { panel.innerHTML = `<div class="profile-empty">No resolver found for<br>${name}</div>`; return; }
 
   const { data, avatarUrl, ethAddr, contentHash, cacheHit } = profile;
-  const cacheLabel = cacheHit === 'db' ? 'DB cache' : cacheHit === 'mem' ? 'mem' : 'live chain';
-  const cacheClass = cacheHit === 'chain' ? 'miss' : 'hit';
+  const cacheLabel = cacheHit === 'chain' ? 'live' : cacheHit;
+  const cacheCls = cacheHit === 'chain' ? 'live' : '';
 
   let html = '';
-  if (data['header']) html += `<img class="profile-banner" src="${data['header']}" alt="Banner" onerror="this.style.display='none'">`;
-  if (avatarUrl) html += `<img class="profile-avatar" src="${avatarUrl}" alt="Avatar" onerror="this.src='${noImg}'">`;
+  if (data['header']) html += `<img class="profile-banner" src="${data['header']}" onerror="this.style.display='none'">`;
+  if (avatarUrl) html += `<img class="profile-avatar" src="${avatarUrl}" onerror="this.src='${noImg}'">`;
 
-  const displayName = data['display'] || name;
-  html += `<div class="profile-name">${displayName} <span class="cache-badge ${cacheClass}">${cacheLabel}</span></div>`;
+  html += `<div class="profile-name">${data['display'] || name} <span class="cache-badge ${cacheCls}">${cacheLabel}</span></div>`;
   html += `<div class="profile-ens">${name}</div>`;
   html += `<hr class="profile-divider">`;
 
@@ -773,14 +713,14 @@ function loadProfilePanel(name, profile) {
     if (key === 'com.twitter') disp = `<a href="https://twitter.com/${val}" target="_blank">@${val}</a>`;
     else if (key === 'com.github') disp = `<a href="https://github.com/${val}" target="_blank">${val}</a>`;
     else if (typeof val === 'string' && val.startsWith('http')) disp = `<a href="${val}" target="_blank">${val}</a>`;
-    else disp = `<span class="val">${val}</span>`;
-    html += `<div class="profile-field"><span class="lbl">${label}</span>${disp}</div>`;
+    else disp = `<span class="field-val">${val}</span>`;
+    html += `<div class="profile-field"><span class="field-lbl">${label}</span>${disp}</div>`;
   }
   if (ethAddr) {
     const short = ethAddr.slice(0,6)+'…'+ethAddr.slice(-4);
-    html += `<div class="profile-field"><span class="lbl">ETH Address</span><a href="https://etherscan.io/address/${ethAddr}" target="_blank">${short}</a></div>`;
+    html += `<div class="profile-field"><span class="field-lbl">ETH Address</span><a href="https://etherscan.io/address/${ethAddr}" target="_blank">${short}</a></div>`;
   }
-  if (contentHash) html += `<div class="profile-field"><span class="lbl">Content Hash</span><span class="val" style="font-size:10px;">${contentHash}</span></div>`;
+  if (contentHash) html += `<div class="profile-field"><span class="field-lbl">Content Hash</span><span class="field-val" style="font-size:10px;">${contentHash}</span></div>`;
 
   panel.innerHTML = html;
 }
@@ -790,22 +730,35 @@ async function refreshEdgesList() {
   const list = document.getElementById('edges-list');
   try {
     const edges = await fetch(`${API}/api/edges`).then(r => r.json());
-    if (!edges.length) { list.innerHTML = '<div class="no-edges">No edges in DB yet.</div>'; return; }
-    list.innerHTML = edges.map(e => {
-      const date = new Date(e.created_at * 1000).toLocaleDateString();
-      return `<div class="edge-item" id="edge-item-${e.id}">
-        <div class="edge-names"><span>${e.name_a}</span> ↔ <span>${e.name_b}</span></div>
-        <div class="edge-date">${date}</div>
+    if (!edges.length) { list.innerHTML = '<div class="no-edges">No edges in DB</div>'; return; }
+    list.innerHTML = edges.map(e => `
+      <div class="edge-item" id="edge-item-${e.id}">
+        <div class="edge-names">${e.name_a} ↔ ${e.name_b}</div>
+        <div class="edge-date">${new Date(e.created_at * 1000).toLocaleDateString()}</div>
         <button class="btn-danger" onclick="deleteEdge(${e.id},'${e.name_a}','${e.name_b}')">✕</button>
-      </div>`;
-    }).join('');
-  } catch(_) { list.innerHTML = '<div class="no-edges">API offline.</div>'; }
+      </div>`).join('');
+  } catch(_) { list.innerHTML = '<div class="no-edges">API offline</div>'; }
 }
 
 async function addEdgeFromForm() {
   const a = document.getElementById('edge-a').value.trim().toLowerCase();
   const b = document.getElementById('edge-b').value.trim().toLowerCase();
   if (!a.endsWith('.eth') || !b.endsWith('.eth')) { toast('Both names must end in .eth', 'err'); return; }
+
+  const progress = document.getElementById('graph-progress');
+  progress.classList.add('active');
+  document.getElementById('progress-text').textContent = 'Fetching profiles...';
+  document.getElementById('progress-bar-fill').style.width = '50%';
+  for (const name of [a, b]) {
+    if (!allProfiles[name]) {
+      try {
+        document.getElementById('progress-text').textContent = `Fetching ${name}...`;
+        allProfiles[name] = await fetchProfile(name);
+      } catch(_) {}
+    }
+  }
+  progress.classList.remove('active');
+
   await createEdge(a, b);
   document.getElementById('edge-a').value = '';
   document.getElementById('edge-b').value = '';
@@ -819,22 +772,22 @@ async function createEdge(a, b) {
     });
     const json = await res.json();
     if (res.ok) {
-      toast(`Edge added: ${a} ↔ ${b}`);
+      toast(`Added: ${a} ↔ ${b}`);
       await refreshEdgesList();
       if (network && nodesDS) {
         const ai = allNames.indexOf(a), bi = allNames.indexOf(b);
         if (ai !== -1 && bi !== -1) {
           const newId = Date.now();
-          edgesDS.add({ id: newId, from: ai, to: bi, color: { color: '#b8b0a0', highlight: '#2563c4', hover: '#2563c4' }, width: 1.5, smooth: { type: 'dynamic' } });
+          edgesDS.add({ id: newId, from: ai, to: bi });
           if (json.edge) edgeIdMap[newId] = json.edge.id;
         }
       }
-    } else { toast(json.error || 'Failed to add edge', 'err'); }
+    } else { toast(json.error || 'Failed', 'err'); }
   } catch(_) { toast('API offline', 'err'); }
 }
 
 async function deleteEdge(dbId, nameA, nameB) {
-  if (!confirm(`Delete edge: ${nameA} ↔ ${nameB}?`)) return;
+  if (!confirm(`Delete: ${nameA} ↔ ${nameB}?`)) return;
   try {
     const res = await fetch(`${API}/api/edges/${dbId}`, { method: 'DELETE' });
     if (res.ok) {
@@ -856,7 +809,7 @@ function toggleDrawMode() {
   const btn = document.getElementById('draw-mode-btn');
   const banner = document.getElementById('edge-mode-banner');
   btn.textContent = drawMode ? 'Disable' : 'Enable';
-  btn.style.cssText = drawMode ? 'background:var(--accent2);color:white;border-color:var(--accent2)' : '';
+  btn.style.cssText = drawMode ? 'background:var(--black);color:var(--white)' : '';
   banner.style.display = drawMode ? 'block' : 'none';
   drawFirst = null;
 }
@@ -866,12 +819,10 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && drawMode) 
 function handleDrawModeClick(nodeId) {
   if (drawFirst === null) {
     drawFirst = nodeId;
-    nodesDS.update({ id: nodeId, borderWidth: 4, color: { border: '#c45825', background: '#fef3ec', highlight: { border: '#c45825', background: '#fef3ec' } } });
-    toast(`Selected: ${allNames[nodeId]} — now click second node`);
+    toast(`Selected: ${allNames[nodeId]} — click second node`);
   } else {
     if (drawFirst === nodeId) { toast('Cannot connect to itself', 'err'); drawFirst = null; return; }
     const a = allNames[drawFirst], b = allNames[nodeId];
-    nodesDS.update({ id: drawFirst, borderWidth: 2, color: { border: '#2563c4', background: '#e8eef8', highlight: { border: '#c45825', background: '#fef3ec' }, hover: { border: '#c45825', background: '#fef3ec' } } });
     drawFirst = null;
     createEdge(a, b);
     toggleDrawMode();
@@ -896,17 +847,15 @@ function toast(msg, type = 'ok') {
   toastTimer = setTimeout(() => el.className = '', 3000);
 }
 
-// ── HEALTH CHECK ──────────────────────────────────────────────────────────────
+// ── HEALTH ────────────────────────────────────────────────────────────────────
 async function checkHealth() {
-  const dot = document.getElementById('status-dot');
-  const txt = document.getElementById('status-text');
   try {
-    const data = await fetch(`${API}/api/health`).then(r => r.json());
-    dot.className = 'status-dot online';
-    txt.textContent = `API online · ${data.profiles} profiles · ${data.edges} edges`;
+    const d = await fetch(`${API}/api/health`).then(r => r.json());
+    document.getElementById('status-dot').className = 'status-dot online';
+    document.getElementById('status-text').textContent = `API online · ${d.profiles}p · ${d.edges}e`;
   } catch(_) {
-    dot.className = 'status-dot offline';
-    txt.textContent = 'API offline — chain only';
+    document.getElementById('status-dot').className = 'status-dot offline';
+    document.getElementById('status-text').textContent = 'API offline';
   }
 }
 checkHealth();
